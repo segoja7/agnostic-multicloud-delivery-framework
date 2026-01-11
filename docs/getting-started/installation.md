@@ -4,7 +4,7 @@
 
 ### Required Dependencies
 
-- **Python 3.10+** 
+- **Python 3.10+**
 - **kubectl** configured and accessible
 - **Kubernetes cluster** with CRDs installed
 - **KCL** (optional, for schema validation)
@@ -13,14 +13,14 @@
 
 Ensure access to a Kubernetes cluster with CRDs from any operator:
 
-- **Cloud Providers**: Crossplane (AWS/GCP/Azure), Config Connector (GCP), Azure Service Operator
+- **Cloud Providers**: (AWS/GCP/Azure), ACK, Config Connector (GCP), Azure Service Operator
+- **Abstraction Layers**: Crossplane, KRO (Kubernetes Resource Orchestrator), KubeVela (OAM)
 - **Databases**: PostgreSQL Operator, MongoDB Operator, Redis Operator, CockroachDB Operator
-- **Networking**: Istio, Cilium, Calico, Linkerd CRDs
+- **Networking**: Istio, Cilium, Calico, Linkerd
 - **Monitoring**: Prometheus Operator, Grafana Operator, Jaeger Operator
-- **CI/CD**: ArgoCD, Tekton, Flux, Jenkins X CRDs
-- **Storage**: Rook, OpenEBS, Longhorn, Portworx CRDs
-- **Custom operators** with any CRDs
-
+- **CI/CD**: ArgoCD, Tekton, Flux
+- **Storage**: Rook, OpenEBS, Longhorn
+- **Agnostic CRD Support**: Works with any operator compliant with Kubernete
 ## Installation Methods
 
 ### Method 1: Development Install (Recommended)
@@ -64,22 +64,13 @@ Add to your `~/.kiro/settings/mcp.json`:
 {
   "mcpServers": {
     "amdf": {
-      "command": "/path/to/amdf-mcp",
-      "args": [],
-      "disabled": false,
-      "autoApprove": [
-        "list_k8s_crds",
-        "process_crd_to_kcl"
-      ]
+      "command": "amdf-mcp",
+      "autoApprove": ["list_k8s_crds", "process_crd_to_kcl"]
     }
   }
 }
 ```
 
-Find your path:
-```bash
-which amdf-mcp
-```
 
 ## Environment Configuration
 
@@ -94,7 +85,7 @@ kubectl config current-context
 # List available CRDs
 kubectl get crds
 
-# Test cluster connectivity  
+# Test cluster connectivity
 kubectl cluster-info
 ```
 
@@ -118,10 +109,10 @@ kubectl config current-context
     ```bash
     # Check for any CRDs
     kubectl get crds
-    
+
     # Check common operators
     kubectl get pods -A | grep -E "(operator|controller)"
-    
+
     # Examples of operator namespaces to check:
     kubectl get pods -n crossplane-system     # Crossplane
     kubectl get pods -n istio-system          # Istio
@@ -132,7 +123,7 @@ kubectl config current-context
 !!! warning "Permission Issues"
     Verify you have permission to access CRDs:
     ```bash
-    kubectl get crds --dry-run=server
+    kubectl auth can-i list crds
     ```
 
 !!! danger "Command Not Found"
@@ -140,7 +131,7 @@ kubectl config current-context
     ```bash
     # Check if installed
     pip list | grep amdf
-    
+
     # Reinstall if needed
     pip install -e . --force-reinstall
     ```

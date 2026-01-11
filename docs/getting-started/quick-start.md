@@ -1,6 +1,6 @@
 # Quick Start
 
-Get up and running with AMDF in 5 minutes using either CLI or MCP interface.
+Start abstracting your infrastructure immediately using either the CLI or MCP interface.
 
 ## Choose Your Interface
 
@@ -16,17 +16,15 @@ Get up and running with AMDF in 5 minutes using either CLI or MCP interface.
     ```
 
 === "MCP Interface"
-    Perfect for interactive AI-assisted workflows with Kiro CLI.
 
     ```json
-    # Add to ~/.kiro/settings/mcp.json
     {
-      "mcpServers": {
+    "mcpServers": {
         "amdf": {
-          "command": "/path/to/amdf-mcp",
-          "disabled": false
+        "command": "amdf-mcp",
+        "autoApprove": ["list_k8s_crds", "process_crd_to_kcl"]
         }
-      }
+    }
     }
     ```
 
@@ -269,7 +267,8 @@ Assistant: [Generates Istio VirtualService schema]
     ```
 
 !!! warning "Permission Issues"
-    Verify you have permission to access CRDs:
+    Verify you have permission to access CRDs using the auth API:
     ```bash
-    kubectl get crds --dry-run=server
+    # Should return "yes"
+    kubectl auth can-i list crds
     ```

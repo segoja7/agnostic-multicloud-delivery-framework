@@ -197,10 +197,11 @@ amdf guided --ai-model qwen3-coder:30b
 **Prerequisites:**
 
 - [Ollama](https://ollama.ai) installed and running
-- Model downloaded: `ollama pull llama3.2`
+- Model downloaded: `ollama pull qwen3-coder:30b`
 
 **Additional Step:**
-4. **AI Explanation** - Detailed explanation of generated files with usage examples
+
+**AI Explanation** - Detailed explanation of generated files with usage examples
 
 **Example Session:**
 

@@ -10,14 +10,17 @@
 [Quick Start](getting-started/quick-start.md){ .md-button .md-button--primary }
 [Examples](examples/basic.md){ .md-button }
 
-## The Problem
+## Why AMDF?
 
-Working with Kubernetes Custom Resource Definitions is complex:
+Direct interaction with Kubernetes Custom Resource Definitions (CRDs) presents critical challenges:
 
-- 🔴 **Complex YAML** - CRDs have hundreds of fields and nested structures
-- 🔴 **No validation** - Errors discovered only at deployment time
-- 🔴 **Inconsistent patterns** - Each provider uses different conventions
-- 🔴 **Steep learning curve** - Developers need deep CRD knowledge
+- **❌ Security & Compliance Risks** Without strict schemas, misconfigurations are easy to commit and hard to validate.
+
+- **❌ Developer Velocity Bottleneck** Writing thousands of lines of YAML manually is slow, error-prone, and hard to reuse across teams.
+
+- **❌ Inefficient Feedback Loops**
+  Engineers waste valuable cycles waiting for CI/CD pipelines to fail, rather than catching configuration errors instantly in the IDE.
+
 
 ## The AMDF Solution
 
@@ -34,7 +37,7 @@ graph LR
 
 | Before AMDF | After AMDF |
 |-------------|------------|
-| 500+ line CRD specs | 10-line blueprints |
+| Complex CRD Manifests | Streamlined Blueprints |
 | Runtime validation errors | Compile-time type checking |
 | Provider-specific patterns | Unified interface |
 | Manual documentation | Auto-generated examples |
@@ -42,13 +45,13 @@ graph LR
 ## Core Capabilities
 
 ### 🔍 **Universal Discovery**
-Automatically finds and catalogs all CRDs in your cluster, regardless of provider or complexity.
+Automatically finds and catalogs all CRDs in your cluster
 
 ### 🏗️ **Smart Generation**
-Creates two complementary outputs:
 
-- **Detailed Schemas** - Complete type-safe models for advanced users
-- **Simple Blueprints** - Curated interfaces exposing only essential parameters
+- **The Library Model (Schema)** - Complete, type-safe representations of the raw CRD.
+
+- **The Developer Interface (Blueprint)** - A concise, easy-to-read module that **exposes only essential configuration**.
 
 ### 🤖 **AI-Enhanced Experience**
 Built-in AI assistant explains generated code and provides usage examples via Ollama integration.
@@ -134,9 +137,19 @@ amdf guided --ai-model qwen3-coder:30b
 
 ## Ecosystem Integration
 
-AMDF works seamlessly with your existing tools:
+AMDF orchestrates a best-in-class stack to deliver infrastructure as code:
 
-- **[KCL](https://kcl-lang.io)** - The configuration language that powers our schemas
-- **[Any CRDS For Kubernetes](https://landscape.cncf.io/)** - Universal control plane for cloud resources
-- **[Kubernetes](https://kubernetes.io)** - The platform we extend and enhance
-- **[Ollama](https://ollama.ai)** - Local AI for intelligent code explanations
+- **[KCL](https://kcl-lang.io)** (Configuration Engine)
+  Provides the modeling language, validation logic, and schema generation capabilities.
+
+- **[CNCF Ecosystem](https://landscape.cncf.io/)** (Target Resource Model)
+  Compatible with **any Kubernetes CRD**, like as Crossplane, ACK, , KRO, Config Connector, and custom operators.
+
+- **[Kubernetes](https://kubernetes.io)** (Control Plane)
+  Serves as the universal API and reconciliation engine that AMDF extends.
+
+- **[Ollama](https://ollama.ai)** (Local Intelligence)
+  Powers the integrated AI assistant for offline, privacy-focused schema explanations and guidance.
+
+- **[Model Context Protocol (MCP)](https://modelcontextprotocol.io)** (Agentic Interface)
+  Exposes AMDF as a standardized server, allowing AI clients to directly interact with, query, and generate infrastructure.
