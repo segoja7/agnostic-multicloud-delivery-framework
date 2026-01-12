@@ -23,22 +23,14 @@ Ensure access to a Kubernetes cluster with CRDs from any operator:
 - **Agnostic CRD Support**: Works with any operator compliant with Kubernete
 ## Installation Methods
 
-### Method 1: Development Install (Recommended)
+### Method 1: PyPI Install (Recommended)
 
 ```bash
-# Clone repository
-git clone https://github.com/segoja7/agnostic-multicloud-delivery-framework.git
-cd agnostic-multicloud-delivery-framework
-
-# Install in development mode
-pip install -e .
-```
-
-### Method 2: Direct Install (Future)
-
-```bash
-# When published to PyPI
+# Install from PyPI
 pip install amdf
+
+# Verify installation
+amdf --version
 ```
 
 ## Verify Installation

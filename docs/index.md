@@ -109,7 +109,7 @@ Focus on business logic instead of learning complex CRD specifications.
 
 ### Installation
 ```bash
-pip install -e .
+pip install amdf
 ```
 
 ### Basic Workflow

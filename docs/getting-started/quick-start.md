@@ -9,7 +9,7 @@ Start abstracting your infrastructure immediately using either the CLI or MCP in
 
     ```bash
     # Install AMDF
-    pip install -e .
+    pip install amdf
 
     # Verify installation
     amdf version

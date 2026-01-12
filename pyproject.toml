@@ -5,9 +5,11 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "amdf"
 version = "0.1.0"
-description = "Agnostic Multi-cloud Delivery Framework"
-authors = [{name = "AMDF Team", email = "team@amdf.dev"}]
-license = {text = "MIT"}
+description = "Transform Kubernetes CRDs into type-safe KCL schemas and developer-friendly blueprints"
+authors = [{name = "AMDF Team"}]
+maintainers = [{name = "AMDF Team"}]
+keywords = ["kubernetes", "crossplane", "kcl", "infrastructure-as-code", "crd", "schema-generation", "mcp", "platform-engineering"]
+license = {file = "LICENSE"}
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -20,6 +22,9 @@ dependencies = [
     "typer>=0.9.0",
     "ollama>=0.6.0",
 ]
+[project.urls]
+Documentation = "https://amdf.readthedocs.io/en/latest/"
+Repository = "https://github.com/segoja7/agnostic-multicloud-delivery-framework"
 
 [project.scripts]
 amdf = "amdf.interfaces.cli.main:app"
