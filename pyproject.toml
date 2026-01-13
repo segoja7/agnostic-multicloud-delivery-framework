@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "amdf"
-version = "0.1.2"
+version = "1.0.0"
 description = "Transform Kubernetes CRDs into type-safe KCL schemas and developer-friendly blueprints"
 authors = [{name = "AMDF Team"}]
 maintainers = [{name = "AMDF Team"}]
@@ -22,6 +22,11 @@ dependencies = [
     "typer>=0.9.0",
     "ollama>=0.6.0",
 ]
+
+[tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
+build_command = "python -m build"
+
 [project.urls]
 Documentation = "https://amdf.readthedocs.io/en/latest/"
 Repository = "https://github.com/segoja7/agnostic-multicloud-delivery-framework"
