@@ -3,15 +3,15 @@ from pathlib import Path
 
 def generate_blueprint_from_schema(detailed_kcl_schema: str, input_filepath: Path) -> tuple[str, str, str]:
     """
-    Genera un Blueprint de alto nivel.
-    Retorna: (código_blueprint, nombre_blueprint, nombre_schema_principal)
+    Generate a high-level Blueprint from detailed KCL schema.
+    Returns: (blueprint_code, blueprint_name, main_schema_name)
     """
     
     schemas = {match.group(1): match.group(2) for match in re.finditer(r"schema\s+(\w+):\s*((?:[\s\S])*?)(?=\n\nschema|\Z)", detailed_kcl_schema)}
     if not schemas:
         return "# ERROR: No schemas found.", "", ""
 
-    # Encontrar schema principal
+    # Find main schema
     main_schema_name = next((name for name, body in schemas.items() 
                            if all(re.search(r"^\s*" + attr + r"\s*\??\s*:", body, re.MULTILINE | re.IGNORECASE) 
                                  for attr in ["apiVersion", "kind", "spec"])), None) 
@@ -22,32 +22,32 @@ def generate_blueprint_from_schema(detailed_kcl_schema: str, input_filepath: Pat
     main_schema_text = schemas[main_schema_name]
     blueprint_name = f"{main_schema_name}Blueprint"
     
-    # Generar import path relativo basado en la estructura de carpetas real
+    # Generate relative import path based on actual folder structure
     try:
-        # Obtenemos la ruta absoluta para asegurarnos de tener todos los segmentos
+        # Get absolute path to ensure we have all segments
         abs_path = input_filepath.resolve()
         path_parts = abs_path.parts
         
-        # Buscamos 'library' como punto de anclaje maestro
-        # Esto hace que el código sea agnóstico al nombre 'models'. Si lo cambias a 'schemas', funcionará igual.
+        # Look for 'library' as master anchor point
+        # This makes the code agnostic to the 'models' name. If you change it to 'schemas', it will work the same.
         if "library" in path_parts:
             lib_index = path_parts.index("library")
-            # Tomamos todo lo que hay DENTRO de library (models/grupo/version/...)
+            # Take everything INSIDE library (models/group/version/...)
             relevant_parts = path_parts[lib_index + 1:]
-            # Unimos con puntos y quitamos la extensión .k del último segmento si existe
-            # Esto convierte /home/.../modules/grupo/version/archivo.k en modules.grupo.version.archivo
+            # Join with dots and remove .k extension from last segment if it exists
+            # This converts /home/.../models/group/version/file.k to models.group.version.file
             clean_parts = [p.replace(".k", "") if p.endswith(".k") else p for p in relevant_parts]
             import_path = ".".join(clean_parts)
         else:
-            # Fallback: si no detectamos la estructura modules, usamos el nombre del archivo
+            # Fallback: if we don't detect the models structure, use the filename
             import_path = input_filepath.stem
     except Exception:
-        # En caso de cualquier error con paths, fallback seguro
+        # In case of any error with paths, safe fallback
         import_path = input_filepath.stem
     
     schema_alias = main_schema_name.lower() + "_schema"
     
-    # Encontrar spec schema
+    # Find spec schema
     spec_match = re.search(r"^\s*spec\s*:\s*(\w+)", main_schema_text, re.MULTILINE | re.IGNORECASE)
     if not spec_match:
         return f"# ERROR: Could not find 'spec' in '{main_schema_name}'.", "", ""
@@ -55,10 +55,10 @@ def generate_blueprint_from_schema(detailed_kcl_schema: str, input_filepath: Pat
     spec_schema_name = spec_match.group(1)
     spec_schema_text = schemas.get(spec_schema_name, "")
     
-    # Buscar forProvider
+    # Look for forProvider
     for_provider_match = re.search(r"^\s*forProvider\s*:\s*(\w+)", spec_schema_text, re.MULTILINE | re.IGNORECASE)
     
-    # Parámetros básicos del blueprint
+    # Basic blueprint parameters
     blueprint_params = {
         "_metadataName": "str",
         "_namespace?": "str", 
@@ -70,7 +70,7 @@ def generate_blueprint_from_schema(detailed_kcl_schema: str, input_filepath: Pat
     if "providerConfigRef" in spec_schema_text:
         blueprint_params["_providerConfig"] = "str"
     
-    # Extraer campos de spec (excluyendo forProvider)
+    # Extract spec fields (excluding forProvider)
     spec_param_mappings = {}
     code_only_body = re.sub(r'"""[\s\S]*?"""', '', spec_schema_text)
     lines = code_only_body.split('\n')
@@ -85,7 +85,7 @@ def generate_blueprint_from_schema(detailed_kcl_schema: str, input_filepath: Pat
                 i += 1
                 continue
                 
-            # Manejar tipos multi-línea
+            # Handle multi-line types
             if '[' in type_part and ']' not in type_part:
                 j = i + 1
                 while j < len(lines) and ']' not in type_part:
@@ -102,7 +102,7 @@ def generate_blueprint_from_schema(detailed_kcl_schema: str, input_filepath: Pat
             is_required = not bool(optional_marker)
             type_clean = type_part.strip().rstrip(',')
             
-            # Mapear tipos básicos correctamente
+            # Map basic types correctly
             if type_clean in ["str", "int", "bool", "any", "float"]:
                 display_type = type_clean
             elif "|" in type_clean or type_clean.startswith('"'):
@@ -120,7 +120,7 @@ def generate_blueprint_from_schema(detailed_kcl_schema: str, input_filepath: Pat
         else:
             i += 1
     
-    # Extraer campos de forProvider
+    # Extract forProvider fields
     for_provider_param_mappings = {}
     if for_provider_match:
         for_provider_schema_name = for_provider_match.group(1)
@@ -173,18 +173,18 @@ def generate_blueprint_from_schema(detailed_kcl_schema: str, input_filepath: Pat
     
     spec_block = f"\n    spec = {{\n" + "\n".join(spec_block_parts) + "\n    }" if spec_block_parts else ""
     
-    blueprint_code = f'''# --- Blueprint de Alto Nivel (Generado Automáticamente) ---
+    blueprint_code = f'''# --- High-Level Blueprint (Auto-Generated) ---
 
 import {import_path} as {schema_alias}
 
 schema {blueprint_name}({schema_alias}.{main_schema_name}):
-    """Este Blueprint simplifica la creación de un recurso {main_schema_name},
-    exponiendo una selección inteligente de campos requeridos y opcionales comunes."""
+    """This Blueprint simplifies the creation of a {main_schema_name} resource,
+    exposing an intelligent selection of common required and optional fields."""
 
-    # Parámetros de entrada simplificados para el usuario
+    # Simplified input parameters for the user
 {params_definitions}
 
-    # Lógica de mapeo de parámetros simples a la estructura compleja
+    # Mapping logic from simple parameters to complex structure
     metadata = {{
         name = _metadataName
         namespace = _namespace

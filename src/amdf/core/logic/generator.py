@@ -4,26 +4,26 @@ import subprocess
 import textwrap
 from pathlib import Path
 
-# Constantes de formato
+# Format constants
 INDENT = "    "
-MODELS_DIR_NAME = "models" # Nombre del directorio para los schemas generados
+MODELS_DIR_NAME = "models"  # Directory name for generated schemas
 
 def init_kcl_module_if_needed(base_dir: str):
     """
-    Inicializa el módulo KCL en el directorio library si no existe.
+    Initialize KCL module in library directory if it doesn't exist.
     """
     library_dir = Path(base_dir) / "library"
     kcl_mod_file = library_dir / "kcl.mod"
     
-    # Si ya existe el archivo kcl.mod, no hacer nada
+    # If kcl.mod file already exists, do nothing
     if kcl_mod_file.exists():
         return
     
-    # Si el directorio library no existe, crearlo
+    # If library directory doesn't exist, create it
     if not library_dir.exists():
         library_dir.mkdir(parents=True, exist_ok=True)
     
-    # Ejecutar kcl mod init library desde el directorio base
+    # Execute kcl mod init library from base directory
     try:
         result = subprocess.run(
             ["kcl", "mod", "init", "library"],
@@ -32,20 +32,20 @@ def init_kcl_module_if_needed(base_dir: str):
             text=True,
             check=True
         )
-        print(f"✅ Módulo KCL inicializado: {result.stdout}")
+        print(f"✅ KCL module initialized: {result.stdout}")
     except subprocess.CalledProcessError as e:
-        print(f"⚠️ Error al inicializar módulo KCL: {e.stderr}")
+        print(f"⚠️ Error initializing KCL module: {e.stderr}")
     except FileNotFoundError:
-        print("⚠️ Comando 'kcl' no encontrado. Asegúrate de que KCL esté instalado.")
+        print("⚠️ 'kcl' command not found. Make sure KCL is installed.")
 
 def to_pascal_case(name):
-    """Convierte un string a PascalCase."""
+    """Convert a string to PascalCase."""
     return name.replace("_", " ").title().replace(" ", "")
 
 class KCLSchemaGenerator:
     """
-    Genera un schema KCL a partir de una definición de CRD en formato JSON OpenAPI.
-    Adaptado para uso como librería.
+    Generate a KCL schema from a CRD definition in JSON OpenAPI format.
+    Adapted for library use.
     """
 
     def __init__(self, crd_name, context=None):
@@ -56,7 +56,7 @@ class KCLSchemaGenerator:
         self.generated_schemas = set()
 
     def _get_crd_json(self):
-        """Obtiene la definición del CRD desde Kubernetes."""
+        """Get CRD definition from Kubernetes."""
         try:
             command = ["kubectl"]
             if self.context:
@@ -71,9 +71,9 @@ class KCLSchemaGenerator:
             )
             self.crd_json = json.loads(result.stdout)
         except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"No se pudo obtener el CRD '{self.crd_name}'. Stderr: {e.stderr}")
+            raise RuntimeError(f"Could not get CRD '{self.crd_name}'. Stderr: {e.stderr}")
         except json.JSONDecodeError:
-            raise ValueError("La salida de kubectl no es un JSON válido.")
+            raise ValueError("kubectl output is not valid JSON.")
 
     def _find_all_schemas(self, schema_name, schema_def):
         if not schema_def or schema_name in self.schemas_to_generate:
@@ -177,7 +177,7 @@ class KCLSchemaGenerator:
         return "schema " + schema_name + ":\n" + textwrap.indent(docstring, INDENT) + "\n" + schema_body
 
     def generate(self, base_dir=""):
-        """Devuelve la ruta del archivo generado y su contenido."""
+        """Return the path of the generated file and its content."""
         self._get_crd_json()
 
         try:
@@ -193,7 +193,7 @@ class KCLSchemaGenerator:
             version = gvk_info["name"]
             kind = crd_spec["names"]["kind"]
         except KeyError as e:
-            raise ValueError(f"El JSON del CRD no tiene la estructura esperada: {e}")
+            raise ValueError(f"CRD JSON does not have expected structure: {e}")
 
         self._find_all_schemas(to_pascal_case(kind), spec_schema)
 
@@ -220,10 +220,10 @@ class KCLSchemaGenerator:
         group_path = group.replace(".", "_")
         filename = f"{group_path}_{version}_{kind}.k"
         
-        # Inicializar módulo KCL si es necesario
+        # Initialize KCL module if needed
         init_kcl_module_if_needed(base_dir)
         
-        # Estructura library/<MODELS_DIR_NAME>/group/version/file.k
+        # Structure library/<MODELS_DIR_NAME>/group/version/file.k
         output_dir = Path(base_dir) / "library" / MODELS_DIR_NAME / group_path / version
         output_path = output_dir / filename
 
@@ -235,7 +235,7 @@ class KCLSchemaGenerator:
         return str(output_path), file_content
 
 def list_available_crds(context=None):
-    """Lista todos los CRDs disponibles en el cluster."""
+    """List all available CRDs in the cluster."""
     try:
         command = ["kubectl"]
         if context:
@@ -251,4 +251,4 @@ def list_available_crds(context=None):
         crds = [line.strip() for line in result.stdout.strip().split('\n') if line.strip()]
         return sorted(crds)
     except subprocess.CalledProcessError as e:
-        raise RuntimeError(f"Error listando CRDs: {e.stderr}")
+        raise RuntimeError(f"Error listing CRDs: {e.stderr}")
