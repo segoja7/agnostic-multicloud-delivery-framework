@@ -1,76 +1,81 @@
-name: Publish Python 🐍 distribution 📦 to PyPI and TestPyPI
+name: Publish Python Package
 
-on: push
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
 
 jobs:
-  build:
-    name: Build distribution 📦
+  test-deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/amdf
+    permissions:
+      id-token: write
+      contents: read
 
     steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-    - name: Set up Python
-      uses: actions/setup-python@v6
-      with:
-        python-version: "3.x"
-    - name: Install pypa/build
-      run: >-
-        python3 -m
-        pip install
-        build
-        --user
-    - name: Build a binary wheel and a source tarball
-      run: python3 -m build
-    - name: Store the distribution packages
-      uses: actions/upload-artifact@v5
-      with:
-        name: python-package-distributions
-        path: dist/
+    - uses: actions/checkout@v4
 
-  publish-to-pypi:
-    name: >-
-      Publish Python 🐍 distribution 📦 to PyPI
-    if: startsWith(github.ref, 'refs/tags/')  # only publish to PyPI on tag pushes
-    needs:
-    - build
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build
+
+    - name: Build package
+      run: python -m build
+
+    - name: Publish to TestPyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository-url: https://test.pypi.org/legacy/
+        skip-existing: true
+        verify-metadata: true
+        verbose: true
+        print-hash: true
+
+    - name: Verify package is installable from TestPyPI
+      run: |
+        python -m pip install \
+          --index-url https://test.pypi.org/simple/ \
+          --no-deps \
+          amdf
+
+  prod-deploy:
+    needs: test-deploy
     runs-on: ubuntu-latest
     environment:
       name: pypi
       url: https://pypi.org/p/amdf
     permissions:
-      id-token: write  # IMPORTANT: mandatory for trusted publishing
+      id-token: write
+      contents: read
 
     steps:
-    - name: Download all the dists
-      uses: actions/download-artifact@v6
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
       with:
-        name: python-package-distributions
-        path: dist/
-    - name: Publish distribution 📦 to PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
+        python-version: '3.x'
 
-  publish-to-testpypi:
-    name: Publish Python 🐍 distribution 📦 to TestPyPI
-    needs:
-    - build
-    runs-on: ubuntu-latest
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build
 
-    environment:
-      name: testpypi
-      url: https://test.pypi.org/p/amdf
+    - name: Build package
+      run: python -m build
 
-    permissions:
-      id-token: write  # IMPORTANT: mandatory for trusted publishing
-
-    steps:
-    - name: Download all the dists
-      uses: actions/download-artifact@v6
-      with:
-        name: python-package-distributions
-        path: dist/
-    - name: Publish distribution 📦 to TestPyPI
+    - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
-        repository-url: https://test.pypi.org/legacy/
+        verify-metadata: true
+        verbose: true
+        print-hash: true
