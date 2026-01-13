@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "amdf"
-version = "0.1.1"
+version = "0.1.2"
 description = "Transform Kubernetes CRDs into type-safe KCL schemas and developer-friendly blueprints"
 authors = [{name = "AMDF Team"}]
 maintainers = [{name = "AMDF Team"}]
