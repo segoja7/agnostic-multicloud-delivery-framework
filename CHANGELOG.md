@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.0.2 (2026-01-14)
+
+### Bug Fixes
+
+- Support CRDs without apiVersion/kind in schema and typed dictionaries
+  ([`9d86654`](https://github.com/segoja7/agnostic-multicloud-delivery-framework/commit/9d86654dbb5b98806867452cca35d18211999918))
+
+
 ## v1.0.0 (2026-01-13)
 
 
