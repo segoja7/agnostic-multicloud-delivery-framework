@@ -113,6 +113,18 @@ def generate_blueprint_from_schema(detailed_kcl_schema: str, input_filepath: Pat
                     display_type = type_clean
                 else:
                     display_type = f"[{schema_alias}.{inner_type}]"
+            elif type_clean.startswith("{") and type_clean.endswith("}"):
+                # Handle typed dictionaries: {str:Type}
+                dict_match = re.match(r'\{([^:]+):([^}]+)\}', type_clean)
+                if dict_match:
+                    key_type, val_type = dict_match.groups()
+                    val_type = val_type.strip()
+                    if val_type in ["str", "int", "bool", "any", "float"]:
+                        display_type = type_clean
+                    else:
+                        display_type = f"{{{key_type}:{schema_alias}.{val_type}}}"
+                else:
+                    display_type = type_clean
             else:
                 display_type = f"{schema_alias}.{type_clean}"
                 

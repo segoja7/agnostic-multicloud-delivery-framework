@@ -88,6 +88,12 @@ class KCLSchemaGenerator:
             if prop_type == "object" and "properties" in prop_def:
                 nested_schema_name = to_pascal_case(f"{schema_name}_{prop_name}")
                 self._find_all_schemas(nested_schema_name, prop_def)
+            elif prop_type == "object" and "additionalProperties" in prop_def:
+                # Handle dictionaries with typed values
+                additional_props = prop_def["additionalProperties"]
+                if additional_props.get("type") == "object" and "properties" in additional_props:
+                    nested_schema_name = to_pascal_case(f"{schema_name}_{prop_name}Value")
+                    self._find_all_schemas(nested_schema_name, additional_props)
             elif prop_type == "array" and prop_def.get("items", {}).get("type") == "object":
                 items_def = prop_def.get("items", {})
                 if "properties" in items_def:
@@ -154,22 +160,24 @@ class KCLSchemaGenerator:
         properties = schema_def.get("properties", {})
         required_fields = schema_def.get("required", [])
 
-        for prop_name, prop_def in properties.items():
-            kcl_type = self._get_kcl_type(prop_name, prop_def, schema_name)
-            if is_root and prop_name in ["apiVersion", "kind"]:
-                is_required = True
-            else:
-                is_required = prop_name in required_fields
+        # For root schemas, always add Kubernetes standard fields first
+        if is_root:
+            api_version_val = f"{group}/{version}"
+            attributes.append(f'apiVersion : str = "{api_version_val}"')
+            attributes.append(f'kind : str = "{kind}"')
+            # metadata is always present in Kubernetes resources
+            if "metadata" not in properties:
+                attributes.append("metadata? : any")
 
+        for prop_name, prop_def in properties.items():
+            # Skip if already added as root field
+            if is_root and prop_name in ["apiVersion", "kind"]:
+                continue
+                
+            kcl_type = self._get_kcl_type(prop_name, prop_def, schema_name)
+            is_required = prop_name in required_fields
             attr_name = prop_name
             attr_line = f"{attr_name}{ '' if is_required else '?'} : {kcl_type}"
-
-            if is_root and prop_name == "apiVersion":
-                api_version_val = f"{group}/{version}"
-                attr_line += f' = "{api_version_val}"'
-            elif is_root and prop_name == "kind":
-                attr_line += f' = "{kind}"'
-
             attributes.append(attr_line)
 
         schema_body = textwrap.indent("\n".join(attributes), INDENT)
