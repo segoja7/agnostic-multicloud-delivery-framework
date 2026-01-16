@@ -1,0 +1,46 @@
+# example/claim.yaml
+apiVersion: segoja7.example/v1alpha1
+kind: XNETWORK
+metadata:
+  name: xnetwork-example
+spec:
+  id: xnetwork-example
+  accountId: "<accountId>"
+  region: us-east-1
+  vpcCidr: "10.50.0.0/16"
+  tags:
+    owner: "platform-team"
+    environment: "development"
+    project: "proyecto"
+    managed-by: "crossplane"
+  providerConfigName: segoja7
+  subnets:
+  - az: us-east-1a
+    cidr: "10.50.10.0/24"
+    type: "public"
+  - az: us-east-1a
+    cidr: "10.50.20.0/24"
+    type: "private"
+  - az: us-east-1a
+    cidr: "10.50.30.0/24"
+    type: "database"
+  - az: us-east-1b
+    cidr: "10.50.40.0/24"
+    type: "public"
+  - az: us-east-1b
+    cidr: "10.50.50.0/24"
+    type: "private"
+  - az: us-east-1b
+    cidr: "10.50.60.0/24"
+    type: "database"
+  natGatewayStrategy: "Single"
+  enabledS3Gateway: false
+  enabledDynamodbGateway: false
+  enabledInterfaceEndpoints:
+   - sts
+  # - ec2
+  flowLogs:
+    enabled: true
+    encryptionEnabled: true #TODO: add logic for managed encryption false
+    trafficType: "REJECT"
+    retentionInDays: 60

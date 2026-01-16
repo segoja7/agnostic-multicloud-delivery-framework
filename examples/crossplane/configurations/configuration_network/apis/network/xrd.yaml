@@ -1,0 +1,114 @@
+  # apis/xrd.yaml
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xnetworks.segoja7.example
+spec:
+  group: segoja7.example
+  names:
+    kind: XNETWORK
+    plural: xnetworks
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              id:
+                type: string
+                description: ID for this VPC and its resources.
+              accountId:
+                type: string
+                description: AWS Account ID where the VPC will be created.
+              region:
+                type: string
+                description: AWS Region for the VPC.
+              vpcCidr:
+                type: string
+                description: The CIDR block for the VPC.
+              enableDnsHostNames:
+                type: boolean
+                description: Indicates whether the instances launched in the VPC get DNS hostnames.
+                default: true
+              enableDnsSupport:
+                type: boolean
+                description: A boolean flag to enable/disable DNS support in the VPC
+                default: true
+              tags:
+                type: object
+                description: A map of tags to apply to all resources.
+                additionalProperties:
+                  type: string
+              instanceTenancy:
+                type: string
+                description: The tenancy of the instances launched in the VPC.
+                default: "default"
+              providerConfigName:
+                type: string
+                description: The name of the ProviderConfig to use for this resource.
+                default: "default"
+
+              subnets:
+                type: array
+                description: A list of subnets to create.
+                items:
+                  type: object
+                  properties:
+                    az:
+                      type: string
+                      description: Availability Zone for the subnet.
+                    cidr:
+                      type: string
+                      description: The CIDR block for the subnet.
+                    type:
+                      type: string
+                      description: The type of subnet, which controls routing.
+                      enum: ["public", "private", "database"]
+                  required: ["az", "cidr", "type"]
+              natGatewayStrategy:
+                type: string
+                description: "Define la estrategia para los NAT Gateways. 'Single' para uno solo, 'PerAZ' uno por cada Zona de Disponibilidad."
+                enum: ["Single", "PerAZ"]
+                default: "Single"
+              enabledS3Gateway:
+                type: boolean
+                description: A boolean flag to enable/disable S3 Gateway support in the VPC
+                default: false
+              enabledDynamodbGateway:
+                type: boolean
+                description: A boolean flag to enable/disable S3 Gateway support in the VPC
+                default: false
+              enabledInterfaceEndpoints:
+                type: array
+                description: A list of interface endpoints to enable 
+                            (e.g., ec2, ssm, ssmmessages, ec2messages, logs, 
+                             secretsmanager, kms, ecr.api, ecr.dkr, sts, sts, sns).
+                items:
+                  type: string
+
+              flowLogs:
+                type: object
+                description: Configuration for VPC Flow Logs.
+                properties:
+                  enabled:
+                    type: boolean
+                    description: Set to true to enable VPC Flow Logs.
+                  encryptionEnabled:
+                    type: boolean
+                    description: Set to true to enable encryption for VPC Flow Logs.
+                  retentionInDays:
+                    type: integer
+                    description: Number of days to retain the logs.
+                    default: 90
+                  trafficType:
+                    type: string
+                    description: The type of traffic to log.
+                    enum: ["ALL", "ACCEPT", "REJECT"]
+                    default: "ALL"
+                required: ["enabled"]
+            required: ["id", "region", "vpcCidr", "subnets"]

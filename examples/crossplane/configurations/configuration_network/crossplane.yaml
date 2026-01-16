@@ -1,0 +1,22 @@
+apiVersion: meta.pkg.crossplane.io/v1
+kind: Configuration
+metadata:
+  name: xnetworks configuration
+  annotations:
+    meta.crossplane.io/maintainer: segoja7
+    meta.crossplane.io/description: |
+      An example Crossplane configuration to provision a VPC in AWS using KCL function.
+    meta.crossplane.io/readme: |
+      This configuration provisions a VPC and subnets in AWS.
+      It is designed to be used with the kcl-function for Crossplane.
+spec:
+  crossplane:
+    version: ">=v2.0"
+  dependsOn:
+    - provider: xpkg.upbound.io/crossplane-contrib/provider-aws
+      version: ">=v0.54.2"
+    - function: xpkg.upbound.io/crossplane-contrib/function-kcl
+      version: ">=v0.11.2"
+    - function: xpkg.upbound.io/crossplane-contrib/function-auto-ready
+      version: ">=v0.4.2"
+    
