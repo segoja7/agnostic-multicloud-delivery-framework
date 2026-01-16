@@ -134,6 +134,8 @@ class KCLSchemaGenerator:
 
     def _generate_docstring(self, schema_name, schema_def):
         description = textwrap.dedent(schema_def.get("description", f"{schema_name} schema.")).strip()
+        # Escape ${...} to avoid KCL string interpolation in docstrings
+        description = description.replace("${", "\\${")
         lines = ['"""', description, '']
         properties = schema_def.get("properties", {})
         if properties:
@@ -146,6 +148,8 @@ class KCLSchemaGenerator:
                 req_opt = "required" if prop_name in required_fields else "optional"
                 attr_line = f"{prop_name} : {kcl_type}, {req_opt}"
                 prop_desc = textwrap.dedent(prop_def.get("description", "No description available.")).strip()
+                # Escape ${...} in property descriptions too
+                prop_desc = prop_desc.replace("${", "\\${")
                 indented_desc = textwrap.indent(prop_desc, INDENT)
                 lines.append(attr_line + "\n" + indented_desc)
         lines.append('"""')

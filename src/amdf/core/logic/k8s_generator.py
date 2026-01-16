@@ -141,6 +141,8 @@ class K8SNativeGenerator:
     def _generate_docstring(self, schema_name: str, schema_def: Dict[str, Any]) -> str:
         """Generate docstring for schema"""
         description = textwrap.dedent(schema_def.get("description", f"{schema_name} schema.")).strip()
+        # Escape ${...} to avoid KCL string interpolation in docstrings
+        description = description.replace("${", "\\${")
         
         lines = ['"""', description]
         
@@ -152,6 +154,8 @@ class K8SNativeGenerator:
             for prop_name, prop_def in properties.items():
                 prop_desc = prop_def.get("description", "No description available.")
                 prop_desc = textwrap.dedent(prop_desc).strip().replace("\n", " ")
+                # Escape ${...} in property descriptions too
+                prop_desc = prop_desc.replace("${", "\\${")
                 required = prop_name in schema_def.get("required", [])
                 req_text = "" if required else ", optional"
                 kcl_type = self._get_kcl_type(prop_name, prop_def, schema_name)
