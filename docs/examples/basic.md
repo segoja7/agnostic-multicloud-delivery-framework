@@ -114,7 +114,130 @@ webServer = Instance.InstanceBlueprint {
 kcl run infrastructure.k | kubectl apply -f -
 ```
 
-## Example 2: Service Mesh with Istio
+## Example 2: Native Kubernetes Application Stack
+
+### Generate Schemas
+
+=== "CLI"
+    ```bash
+    # Generate native Kubernetes schemas
+    amdf generate-k8s Pod
+    amdf generate-k8s Service
+    amdf generate-k8s Deployment
+    amdf generate-k8s ConfigMap
+    amdf generate-k8s ServiceAccount
+    ```
+
+=== "MCP"
+    ```
+    "Generate schemas for Pod, Service, Deployment, ConfigMap, and ServiceAccount"
+    "Create blueprints for native Kubernetes objects"
+    ```
+
+### Use Generated Blueprints
+
+```kcl
+import library.blueprints.ServiceAccount
+import library.blueprints.ConfigMap
+import library.blueprints.Service
+import library.blueprints.Deployment
+
+# ServiceAccount
+appServiceAccount = ServiceAccount.ServiceAccountBlueprint {
+    _metadataName = "nginx-sa"
+    _namespace = "demo"
+    _labels = {app = "nginx"}
+}
+
+# ConfigMap
+appConfig = ConfigMap.ConfigMapBlueprint {
+    _metadataName = "nginx-config"
+    _namespace = "demo"
+    _data = {
+        "nginx.conf" = '''
+        server {
+            listen 80;
+            server_name localhost;
+            location / {
+                root /usr/share/nginx/html;
+                index index.html;
+            }
+        }
+        '''
+        "index.html" = '''
+        <!DOCTYPE html>
+        <html>
+        <head><title>AMDF Demo</title></head>
+        <body><h1>Hello from AMDF-generated Kubernetes!</h1></body>
+        </html>
+        '''
+    }
+    _labels = {app = "nginx"}
+}
+
+# Service
+appService = Service.ServiceBlueprint {
+    _metadataName = "nginx"
+    _namespace = "demo"
+    _labels = {app = "nginx", service = "nginx"}
+    _ports = [{name = "http", port = 80, protocol = "TCP", targetPort = 80}]
+    _selector = {app = "nginx"}
+    _type = "ClusterIP"
+}
+
+# Deployment
+appDeployment = Deployment.DeploymentBlueprint {
+    _metadataName = "nginx"
+    _namespace = "demo"
+    _labels = {app = "nginx", version = "v1"}
+    _replicas = 2
+    _selector = {matchLabels = {app = "nginx", version = "v1"}}
+    _template = {
+        metadata = {
+            labels = {app = "nginx", version = "v1"}
+        }
+        spec = {
+            serviceAccountName = appServiceAccount.metadata.name  # Reference
+            containers = [{
+                name = "nginx"
+                image = "nginx:latest"
+                imagePullPolicy = "IfNotPresent"
+                ports = [{containerPort = 80}]
+                volumeMounts = [{
+                    name = "config"
+                    mountPath = "/etc/nginx/conf.d"
+                }, {
+                    name = "html"
+                    mountPath = "/usr/share/nginx/html"
+                }]
+                resources = {
+                    requests = {memory = "64Mi", cpu = "100m"}
+                    limits = {memory = "128Mi", cpu = "200m"}
+                }
+            }]
+            volumes = [{
+                name = "config"
+                configMap = {name = appConfig.metadata.name}
+            }, {
+                name = "html"
+                configMap = {name = appConfig.metadata.name}
+            }]
+        }
+    }
+}
+```
+
+### Deploy
+
+```bash
+# Render and apply
+kcl run k8s-app.k | kubectl apply -f -
+
+# Verify deployment
+kubectl get pods,svc,cm,sa -n demo -l app=nginx
+```
+
+## Example 3: Service Mesh with Istio
 
 ### Generate Schemas
 
@@ -224,7 +347,7 @@ appDestinationRule = Destinationrule.DestinationruleBlueprint {
 }
 ```
 
-## Example 3: Monitoring with Prometheus Operator
+## Example 4: Monitoring with Prometheus Operator
 
 ### Generate Schemas
 
@@ -327,7 +450,7 @@ alertmanager = Alertmanager.AlertmanagerBlueprint {
 }
 ```
 
-## Example 4: GitOps with ArgoCD
+## Example 5: GitOps with ArgoCD
 
 ### Generate Schemas
 
@@ -425,6 +548,116 @@ infraApp = Application.ApplicationBlueprint {
 }
 ```
 
+## Example 6: Hybrid Stack - CRDs + Native Kubernetes
+
+### Generate Schemas
+
+=== "CLI"
+    ```bash
+    # Generate Istio CRDs
+    amdf generate virtualservices.networking.istio.io
+    amdf generate gateways.networking.istio.io
+
+    # Generate native K8s objects
+    amdf generate-k8s Service
+    amdf generate-k8s Deployment
+    amdf generate-k8s ServiceAccount
+    ```
+
+=== "MCP"
+    ```
+    "Generate Istio VirtualService and Gateway schemas"
+    "Generate native Kubernetes Service, Deployment, and ServiceAccount schemas"
+    ```
+
+### Use Generated Blueprints
+
+```kcl
+import library.blueprints.Gateway
+import library.blueprints.Virtualservice
+import library.blueprints.ServiceAccount
+import library.blueprints.Service
+import library.blueprints.Deployment
+
+# Native Kubernetes Resources
+serviceAccount = ServiceAccount.ServiceAccountBlueprint {
+    _metadataName = "nginx-sa"
+    _namespace = "demo"
+    _labels = {app = "nginx"}
+}
+
+service = Service.ServiceBlueprint {
+    _metadataName = "nginx"
+    _namespace = "demo"
+    _labels = {app = "nginx"}
+    _ports = [{name = "http", port = 80, protocol = "TCP", targetPort = 80}]
+    _selector = {app = "nginx"}
+    _type = "ClusterIP"
+}
+
+deployment = Deployment.DeploymentBlueprint {
+    _metadataName = "nginx"
+    _namespace = "demo"
+    _labels = {app = "nginx", version = "v1"}
+    _replicas = 1
+    _selector = {matchLabels = {app = "nginx", version = "v1"}}
+    _template = {
+        metadata = {labels = {app = "nginx", version = "v1"}}
+        spec = {
+            serviceAccountName = serviceAccount.metadata.name
+            containers = [{
+                name = "nginx"
+                image = "nginx:latest"
+                ports = [{containerPort = 80}]
+            }]
+        }
+    }
+}
+
+# Istio CRD Resources
+gateway = Gateway.GatewayBlueprint {
+    _metadataName = "nginx-gateway"
+    _namespace = "demo"
+    _selector = {istio = "ingressgateway"}
+    _servers = [{
+        hosts = ["*"]
+        port = {
+            name = "http"
+            number = 80
+            protocol = "HTTP"
+        }
+    }]
+}
+
+virtualService = Virtualservice.VirtualserviceBlueprint {
+    _metadataName = "nginx"
+    _namespace = "demo"
+    _hosts = ["*"]
+    _gateways = [gateway.metadata.name]  # Reference
+    _http = [{
+        route = [{
+            destination = {
+                host = service.metadata.name  # Reference
+                port = {number = 80}
+            }
+        }]
+    }]
+}
+
+# Combine all resources
+items = [serviceAccount, service, deployment, gateway, virtualService]
+```
+
+### Deploy
+
+```bash
+# Deploy everything together
+kcl run hybrid-stack.k -S items | kubectl apply -f -
+
+# Verify Istio integration
+kubectl get gateway,virtualservice,svc,deploy -n demo
+```
+
 ## Common Patterns
 
 ### Multi-Environment Setup
@@ -432,7 +665,9 @@ infraApp = Application.ApplicationBlueprint {
 ```kcl
 # environments/production.k
 import library.blueprints.Instance
+import library.blueprints.Deployment
 
+# Crossplane resource
 prodInstance = Instance.InstanceBlueprint {
     _metadataName = "prod-web-server"
     _instanceType = "m5.large"
@@ -442,8 +677,28 @@ prodInstance = Instance.InstanceBlueprint {
     }
 }
 
+# Native K8s resource
+prodDeployment = Deployment.DeploymentBlueprint {
+    _metadataName = "prod-app"
+    _namespace = "production"
+    _replicas = 3
+    _template = {
+        spec = {
+            containers = [{
+                name = "app"
+                image = "myapp:v1.2.3"
+                resources = {
+                    requests = {memory = "256Mi", cpu = "200m"}
+                    limits = {memory = "512Mi", cpu = "500m"}
+                }
+            }]
+        }
+    }
+}
+
 # environments/staging.k
 import library.blueprints.Instance
+import library.blueprints.Deployment
 
 stagingInstance = Instance.InstanceBlueprint {
     _metadataName = "staging-web-server"
@@ -451,6 +706,23 @@ stagingInstance = Instance.InstanceBlueprint {
     _tags = {
         Environment = "staging"
         AutoShutdown = "enabled"
+    }
+}
+
+stagingDeployment = Deployment.DeploymentBlueprint {
+    _metadataName = "staging-app"
+    _namespace = "staging"
+    _replicas = 1
+    _template = {
+        spec = {
+            containers = [{
+                name = "app"
+                image = "myapp:latest"
+                resources = {
+                    requests = {memory = "128Mi", cpu = "100m"}
+                }
+            }]
+        }
     }
 }
 ```
@@ -465,7 +737,13 @@ commonTags = {
     ManagedBy = "kcl"
 }
 
-# Use in resources
+commonLabels = {
+    project = "my-app"
+    team = "platform"
+    managedBy = "amdf"
+}
+
+# Use in Crossplane resources
 import config.common
 
 webServer = Instance.InstanceBlueprint {
@@ -474,12 +752,26 @@ webServer = Instance.InstanceBlueprint {
         Role = "webserver"
     }
 }
+
+# Use in native K8s resources
+import config.common
+
+deployment = Deployment.DeploymentBlueprint {
+    _metadataName = "web-app"
+    _labels = common.commonLabels | {
+        app = "web"
+        version = "v1"
+    }
+}
 ```
 
 ### Validation and Policies
 
 ```kcl
 # policies/security.k
+import library.blueprints.Instance
+import library.blueprints.Deployment
+
 schema SecureInstance(Instance.InstanceBlueprint):
     # Enforce security requirements
     check:
@@ -487,11 +779,40 @@ schema SecureInstance(Instance.InstanceBlueprint):
         _rootBlockDevice[0].encrypted == True, "Root volume must be encrypted"
         "Environment" in _tags, "Environment tag is required"
 
+schema SecureDeployment(Deployment.DeploymentBlueprint):
+    # Enforce K8s security requirements
+    check:
+        _template.spec.containers[0].securityContext.runAsNonRoot == True, "Must run as non-root"
+        _template.spec.containers[0].securityContext.readOnlyRootFilesystem == True, "Root filesystem must be read-only"
+        _template.spec.containers[0].resources.limits != None, "Resource limits are required"
+
 # Use with validation
 secureWeb = SecureInstance {
     _metadataName = "secure-web-server"
     _instanceType = "t3.medium"
     # ... other configuration
+}
+
+secureApp = SecureDeployment {
+    _metadataName = "secure-app"
+    _namespace = "production"
+    _template = {
+        spec = {
+            containers = [{
+                name = "app"
+                image = "myapp:v1.0.0"
+                securityContext = {
+                    runAsNonRoot = True
+                    readOnlyRootFilesystem = True
+                    runAsUser = 1000
+                }
+                resources = {
+                    limits = {memory = "256Mi", cpu = "200m"}
+                    requests = {memory = "128Mi", cpu = "100m"}
+                }
+            }]
+        }
+    }
 }
 ```
 

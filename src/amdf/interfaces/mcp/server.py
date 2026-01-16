@@ -1,6 +1,7 @@
 from mcp.server.fastmcp import FastMCP
 from pathlib import Path
 from ...core.logic.generator import KCLSchemaGenerator, list_available_crds, init_kcl_module_if_needed
+from ...core.logic.k8s_generator import K8SNativeGenerator
 from ...core.logic.blueprint import generate_blueprint_from_schema
 
 # Definimos el servidor
@@ -31,29 +32,29 @@ def process_crd_to_kcl(crd_name: str, context: str = None) -> str:
     Retorna la ubicación de los archivos generados.
     """
     try:
-        # Paso 1: Generar Schema Detallado
-        # kcl_generator.py ya está configurado para guardar en 'library/models'
+        # Step 1: Generate Detailed Schema
+        # kcl_generator.py is already configured to save in 'library/models'
         base_dir = str(Path.cwd())
         generator = KCLSchemaGenerator(crd_name=crd_name, context=context)
 
         schema_path, schema_content = generator.generate(base_dir=base_dir)
 
-        # Paso 2: Generar Blueprint
-        # Recuperamos 'main_schema_name' (ej: Vpc) para usarlo como nombre de archivo corto
+        # Step 2: Generate Blueprint
+        # Retrieve 'main_schema_name' (e.g., Vpc) to use as short filename
         blueprint_code, bp_name, main_schema_name = generate_blueprint_from_schema(schema_content, Path(schema_path))
 
         if not bp_name:
-            return f"⚠️ Schema generado en {schema_path}, pero falló la generación del Blueprint."
+            return f"⚠️ Schema generated at {schema_path}, but Blueprint generation failed."
 
-        # Inicializar módulo KCL si es necesario
+        # Initialize KCL module if needed
         init_kcl_module_if_needed(base_dir)
         
-        # Guardar Blueprint en 'library/blueprints/' con nombre corto (ej: Vpc.k)
-        # Esto simplifica drásticamente la experiencia del desarrollador final.
+        # Save Blueprint in 'library/blueprints/' with short name (e.g., Vpc.k)
+        # This dramatically simplifies the end developer experience.
         blueprint_dir = Path(base_dir) / "library" / "blueprints"
         blueprint_dir.mkdir(parents=True, exist_ok=True)
 
-        # Nombre de archivo limpio: Vpc.k
+        # Clean filename: Vpc.k
         output_bp_path = blueprint_dir / f"{main_schema_name}.k"
 
         output_bp_path.write_text(blueprint_code, encoding='utf-8')
@@ -77,7 +78,62 @@ import library.blueprints.{main_schema_name}
 """
 
     except Exception as e:
-        return f"❌ Error crítico durante el proceso: {str(e)}"
+        return f"❌ Critical error during process: {str(e)}"
+
+@server.tool()
+def process_k8s_to_kcl(kind: str, k8s_version: str = "1.35.0") -> str:
+    """
+    Complete workflow for native Kubernetes objects:
+    1. Downloads the Kubernetes OpenAPI spec.
+    2. Extracts the native object definition.
+    3. Generates detailed KCL Schema in 'library/models'.
+    4. Generates simplified KCL Blueprint in 'library/blueprints'.
+
+    Returns the location of the generated files.
+    """
+    try:
+        base_dir = str(Path.cwd())
+        
+        # Generate schema from native K8s object
+        generator = K8SNativeGenerator(kind=kind, k8s_version=k8s_version)
+        schema_path, schema_content = generator.generate(base_dir=base_dir)
+        
+        # Generate blueprint
+        blueprint_code, bp_name, main_schema_name = generate_blueprint_from_schema(
+            schema_content, Path(schema_path)
+        )
+        
+        if not bp_name:
+            return f"⚠️ Schema generated at {schema_path}, but Blueprint generation failed."
+        
+        # Save Blueprint
+        blueprint_dir = Path(base_dir) / "library" / "blueprints"
+        blueprint_dir.mkdir(parents=True, exist_ok=True)
+        output_bp_path = blueprint_dir / f"{main_schema_name}.k"
+        output_bp_path.write_text(blueprint_code, encoding='utf-8')
+        
+        return f"""✅ Kubernetes {kind} schema generated successfully (v{k8s_version}).
+
+1. Detailed Schema (Backend):
+   {schema_path}
+
+2. Simplified Blueprint (Frontend):
+   {output_bp_path}
+
+Usage example:
+
+import library.blueprints.{main_schema_name}
+
+{main_schema_name.lower()} = {main_schema_name}.{bp_name} {{
+    _metadataName = "my-{kind.lower()}"
+    _namespace = "demo"
+    ...
+}}
+"""
+        
+    except Exception as e:
+        return f"❌ Critical error generating Kubernetes {kind} schema: {str(e)}"
+
 
 def main():
     """Entry point for MCP server"""

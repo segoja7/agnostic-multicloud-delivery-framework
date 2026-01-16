@@ -21,8 +21,7 @@ Start abstracting your infrastructure immediately using either the CLI or MCP in
     {
     "mcpServers": {
         "amdf": {
-        "command": "amdf-mcp",
-        "autoApprove": ["list_k8s_crds", "process_crd_to_kcl"]
+        "command": "amdf-mcp"
         }
     }
     }
@@ -40,7 +39,7 @@ kubectl cluster-info
 kubectl get crds | head -10
 ```
 
-## Step 2: Discover CRDs
+## Step 2: Discover Resources
 
 === "CLI"
     ```bash
@@ -70,55 +69,101 @@ virtualservices.networking.istio.io
 
 === "CLI"
     ```bash
-    # Generate schema + blueprint
+    # Generate from CRDs
     amdf generate instances.ec2.aws.upbound.io
+
+    # Generate from native Kubernetes objects
+    amdf generate-k8s Pod
+    amdf generate-k8s Service
 
     # Generate without blueprint
     amdf generate instances.ec2.aws.upbound.io --no-blueprint
 
     # Custom output directory
-    amdf generate instances.ec2.aws.upbound.io --output ./my-schemas
+    amdf generate-k8s Deployment --output ./my-schemas
     ```
 
 === "MCP"
     ```
     "Generate schema for instances.ec2.aws.upbound.io"
+    "Generate schema for Kubernetes Pod"
+    "Generate Service schema"
     ```
 
 This creates:
 
+**For CRDs:**
 - **Detailed Schema**: `library/models/ec2_aws_upbound_io/v1beta1/ec2_aws_upbound_io_v1beta1_Instance.k`
-
 - **Simple Blueprint**: `library/blueprints/Instance.k`
 
-## Step 4: Use the Generated Blueprint
+**For Native K8s Objects:**
+- **Detailed Schema**: `library/models/k8s/v1/k8s_v1_Pod.k`
+- **Simple Blueprint**: `library/blueprints/Pod.k`
+
+## Step 4: Use the Generated Blueprints
 
 Create your first infrastructure configuration:
 
-```kcl
-import library.blueprints.Instance
+=== "Crossplane Resource"
+    ```kcl
+    import library.blueprints.Instance
 
-# Production EC2
-webServer = Instance.InstanceBlueprint {
-    _metadataName = "my-web-server"
-    _providerConfig = "default"
-    _instanceType = "t3.medium"
-    _region = "us-east-1"
+    # Production EC2
+    webServer = Instance.InstanceBlueprint {
+        _metadataName = "my-web-server"
+        _providerConfig = "default"
+        _instanceType = "t3.medium"
+        _region = "us-east-1"
 
-    # Security best practices
-    _metadataOptions = [{
-        httpTokens = "required"  # IMDSv2
-    }]
-    _rootBlockDevice = [{
-        encrypted = True
-    }]
+        # Security best practices
+        _metadataOptions = [{
+            httpTokens = "required"  # IMDSv2
+        }]
+        _rootBlockDevice = [{
+            encrypted = True
+        }]
 
-    _tags = {
-        Name = "my-web-server"
-        Environment = "production"
+        _tags = {
+            Name = "my-web-server"
+            Environment = "production"
+        }
     }
-}
-```
+    ```
+
+=== "Native Kubernetes"
+    ```kcl
+    import library.blueprints.Service
+    import library.blueprints.Deployment
+
+    # Service
+    service = Service.ServiceBlueprint {
+        _metadataName = "nginx"
+        _namespace = "demo"
+        _labels = {app = "nginx"}
+        _ports = [{name = "http", port = 80, protocol = "TCP", targetPort = 80}]
+        _selector = {app = "nginx"}
+        _type = "ClusterIP"
+    }
+
+    # Deployment
+    deployment = Deployment.DeploymentBlueprint {
+        _metadataName = "nginx"
+        _namespace = "demo"
+        _labels = {app = "nginx", version = "v1"}
+        _replicas = 2
+        _selector = {matchLabels = {app = "nginx", version = "v1"}}
+        _template = {
+            metadata = {labels = {app = "nginx", version = "v1"}}
+            spec = {
+                containers = [{
+                    name = "nginx"
+                    image = "nginx:latest"
+                    ports = [{containerPort = 80}]
+                }]
+            }
+        }
+    }
+    ```
 
 ## Step 5: Deploy and Distribute
 
@@ -180,48 +225,64 @@ AMDF generates KCL modules that can be distributed using standard KCL package ma
 
 === "CLI"
     ```bash
-    # Generate VPC components
+    # Generate CRD components
     amdf generate vpcs.ec2.aws.upbound.io
     amdf generate subnets.ec2.aws.upbound.io
     amdf generate internetgateways.ec2.aws.upbound.io
+
+    # Generate native K8s components
+    amdf generate-k8s Pod
+    amdf generate-k8s Service
+    amdf generate-k8s Deployment
     ```
 
 === "MCP"
     ```
     "Generate schemas for VPC, subnets, and internet gateway"
     "Create networking blueprints for AWS"
+    "Generate Kubernetes Pod, Service, and Deployment schemas"
     ```
 
 ### Service Mesh Setup
 
 === "CLI"
     ```bash
-    # Istio resources
+    # Istio CRDs
     amdf list-crds --filter istio
     amdf generate virtualservices.networking.istio.io
     amdf generate gateways.networking.istio.io
+
+    # Native K8s for workloads
+    amdf generate-k8s Service
+    amdf generate-k8s ServiceAccount
     ```
 
 === "MCP"
     ```
     "List Istio CRDs"
     "Generate Istio VirtualService schema"
+    "Generate Kubernetes Service and ServiceAccount schemas"
     ```
 
 ### Monitoring Stack
 
 === "CLI"
     ```bash
-    # Prometheus Operator
+    # Prometheus Operator CRDs
     amdf list-crds --filter prometheus
     amdf generate prometheuses.monitoring.coreos.com
     amdf generate servicemonitors.monitoring.coreos.com
+
+    # Native K8s for configuration
+    amdf generate-k8s ConfigMap
+    amdf generate-k8s Secret
     ```
 
 === "MCP"
     ```
     "Show me Prometheus operator CRDs"
     "Generate monitoring schemas"
+    "Generate ConfigMap and Secret schemas for configuration"
     ```
 
 ## Example Conversations (MCP)
@@ -243,8 +304,19 @@ Assistant: [Generates schemas and blueprints]
 User: "Show me Istio CRDs"
 Assistant: [Lists Istio-related CRDs]
 
-User: "Generate schema for VirtualService"
-Assistant: [Generates Istio VirtualService schema]
+User: "Generate schema for VirtualService and native Service"
+Assistant: [Generates Istio VirtualService and Kubernetes Service schemas]
+
+```
+
+### Scenario 3: Complete Application Stack
+
+```
+User: "I need to deploy a web application with Kubernetes"
+Assistant: [Shows available native K8s objects]
+
+User: "Generate schemas for Deployment, Service, and ConfigMap"
+Assistant: [Generates native Kubernetes schemas and blueprints]
 
 ```
 

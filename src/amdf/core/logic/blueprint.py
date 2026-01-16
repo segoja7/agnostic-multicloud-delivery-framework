@@ -11,10 +11,10 @@ def generate_blueprint_from_schema(detailed_kcl_schema: str, input_filepath: Pat
     if not schemas:
         return "# ERROR: No schemas found.", "", ""
 
-    # Find main schema
+    # Find main schema (must have apiVersion and kind, spec is optional)
     main_schema_name = next((name for name, body in schemas.items() 
                            if all(re.search(r"^\s*" + attr + r"\s*\??\s*:", body, re.MULTILINE | re.IGNORECASE) 
-                                 for attr in ["apiVersion", "kind", "spec"])), None) 
+                                 for attr in ["apiVersion", "kind"])), None) 
     
     if not main_schema_name:
         return "# ERROR: Could not identify main schema.", "", ""
@@ -49,14 +49,23 @@ def generate_blueprint_from_schema(detailed_kcl_schema: str, input_filepath: Pat
     
     # Find spec schema
     spec_match = re.search(r"^\s*spec\s*:\s*(\w+)", main_schema_text, re.MULTILINE | re.IGNORECASE)
-    if not spec_match:
-        return f"# ERROR: Could not find 'spec' in '{main_schema_name}'.", "", ""
     
-    spec_schema_name = spec_match.group(1)
-    spec_schema_text = schemas.get(spec_schema_name, "")
+    # Determine if resource has spec or uses direct fields
+    has_spec = spec_match is not None
     
-    # Look for forProvider
-    for_provider_match = re.search(r"^\s*forProvider\s*:\s*(\w+)", spec_schema_text, re.MULTILINE | re.IGNORECASE)
+    if has_spec:
+        spec_schema_name = spec_match.group(1)
+        spec_schema_text = schemas.get(spec_schema_name, "")
+    else:
+        # For resources without spec (ServiceAccount, ConfigMap, Secret, etc.)
+        # Use the main schema fields directly
+        spec_schema_name = main_schema_name
+        spec_schema_text = main_schema_text
+    
+    # Look for forProvider (only relevant for Crossplane resources with spec)
+    for_provider_match = None
+    if has_spec:
+        for_provider_match = re.search(r"^\s*forProvider\s*:\s*(\w+)", spec_schema_text, re.MULTILINE | re.IGNORECASE)
     
     # Basic blueprint parameters
     blueprint_params = {
@@ -70,10 +79,16 @@ def generate_blueprint_from_schema(detailed_kcl_schema: str, input_filepath: Pat
     if "providerConfigRef" in spec_schema_text:
         blueprint_params["_providerConfig"] = "str"
     
-    # Extract spec fields (excluding forProvider)
+    # Extract spec fields (excluding forProvider and standard K8s fields)
     spec_param_mappings = {}
     code_only_body = re.sub(r'"""[\s\S]*?"""', '', spec_schema_text)
     lines = code_only_body.split('\n')
+    
+    # Fields to exclude
+    excluded_fields = ["forProvider", "providerConfigRef"]
+    if not has_spec:
+        # For resources without spec, also exclude standard Kubernetes fields
+        excluded_fields.extend(["apiVersion", "kind", "metadata", "status"])
     
     i = 0
     while i < len(lines):
@@ -81,7 +96,7 @@ def generate_blueprint_from_schema(detailed_kcl_schema: str, input_filepath: Pat
         match = re.match(r'^([a-zA-Z0-9_]+)(\??)\s+:\s*(.+)', line)
         if match:
             name, optional_marker, type_part = match.groups()
-            if name in ["forProvider", "providerConfigRef"]: 
+            if name in excluded_fields: 
                 i += 1
                 continue
                 
@@ -172,18 +187,25 @@ def generate_blueprint_from_schema(detailed_kcl_schema: str, input_filepath: Pat
     
     params_definitions = "\n".join([f"    {name}: {stype}" for name, stype in blueprint_params.items()])
     
-    spec_mappings_str = "\n".join([f"        {field} = {param}" for field, param in spec_param_mappings.items()])
-    for_provider_mappings_str = "\n".join([f"            {field} = {param}" for field, param in for_provider_param_mappings.items()])
-    
-    spec_block_parts = []
-    if spec_mappings_str: 
-        spec_block_parts.append(spec_mappings_str)
-    if for_provider_mappings_str:
-        spec_block_parts.append(f"        forProvider = {{\n{for_provider_mappings_str}\n        }}")
-    if "_providerConfig" in blueprint_params:
-        spec_block_parts.append("        providerConfigRef.name = _providerConfig")
-    
-    spec_block = f"\n    spec = {{\n" + "\n".join(spec_block_parts) + "\n    }" if spec_block_parts else ""
+    # Build spec block or direct field mappings
+    if has_spec:
+        # Resources with spec: wrap fields in spec block (8 spaces indent)
+        spec_mappings_str = "\n".join([f"        {field} = {param}" for field, param in spec_param_mappings.items()])
+        for_provider_mappings_str = "\n".join([f"            {field} = {param}" for field, param in for_provider_param_mappings.items()])
+        
+        spec_block_parts = []
+        if spec_mappings_str: 
+            spec_block_parts.append(spec_mappings_str)
+        if for_provider_mappings_str:
+            spec_block_parts.append(f"        forProvider = {{\n{for_provider_mappings_str}\n        }}")
+        if "_providerConfig" in blueprint_params:
+            spec_block_parts.append("        providerConfigRef.name = _providerConfig")
+        
+        spec_block = f"\n    spec = {{\n" + "\n".join(spec_block_parts) + "\n    }" if spec_block_parts else ""
+    else:
+        # Resources without spec: map fields directly to root (4 spaces indent)
+        spec_mappings_str = "\n".join([f"    {field} = {param}" for field, param in spec_param_mappings.items()])
+        spec_block = "\n" + spec_mappings_str if spec_mappings_str else ""
     
     blueprint_code = f'''# --- High-Level Blueprint (Auto-Generated) ---
 

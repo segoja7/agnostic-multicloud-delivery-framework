@@ -45,11 +45,11 @@ graph LR
 ## Core Capabilities
 
 ### 🔍 **Universal Discovery**
-Automatically finds and catalogs all CRDs in your cluster
+Automatically finds and catalogs all CRDs in your cluster and supports native Kubernetes objects
 
 ### 🏗️ **Smart Generation**
 
-- **The Library Model (Schema)** - Complete, type-safe representations of the raw CRD.
+- **The Library Model (Schema)** - Complete, type-safe representations of any Kubernetes resource.
 
 - **The Developer Interface (Blueprint)** - A concise, easy-to-read module that **exposes only essential configuration**.
 
@@ -58,7 +58,7 @@ Built-in AI assistant explains generated code and provides usage examples via Ol
 
 ### 🔌 **Multiple Interfaces**
 
-- **CLI Tool** - Direct command-line usage
+- **CLI Tool** - Direct command-line usage for CRDs and native K8s objects
 - **MCP Server** - Integration with AI development tools
 - **Guided Mode** - Interactive wizard for beginners
 
@@ -117,15 +117,31 @@ pip install amdf
 # Discover what's available
 amdf list-crds --filter aws
 
-# Generate schemas
+# Generate schemas from CRDs
 amdf generate instances.ec2.aws.upbound.io
 
-# Use the blueprint
-import library.blueprints.Instance
+# Generate schemas from native Kubernetes objects
+amdf generate-k8s Pod
+amdf generate-k8s Service
 
+# Use the blueprints
+import library.blueprints.Instance
+import library.blueprints.Service
+
+# Crossplane resource
 server = Instance.InstanceBlueprint {
     _metadataName = "web-server"
     _instanceType = "t3.medium"
+}
+
+# Native Kubernetes resource
+service = Service.ServiceBlueprint {
+    _metadataName = "nginx"
+    _namespace = "demo"
+    _labels = {app = "nginx"}
+    _ports = [{name = "http", port = 80, protocol = "TCP", targetPort = 80}]
+    _selector = {app = "nginx"}
+    _type = "ClusterIP"
 }
 ```
 

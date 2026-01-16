@@ -94,6 +94,53 @@ def generate(
 
 
 @app.command()
+def generate_k8s(
+    kind: str = typer.Argument(..., help="Kubernetes native kind (e.g., Pod, Service, Deployment)"),
+    k8s_version: str = typer.Option("1.35.0", "--version", "-v", help="Kubernetes version"),
+    output_dir: str = typer.Option(".", "--output", "-o", help="Output directory"),
+    with_blueprint: bool = typer.Option(True, "--blueprint/--no-blueprint", help="Generate blueprint")
+):
+    """Generate KCL schema from native Kubernetes objects"""
+    try:
+        console.print(f"[blue]Generating schema for Kubernetes {kind} (v{k8s_version})[/blue]")
+        
+        from ...core.logic.k8s_generator import K8SNativeGenerator
+        
+        # Generate schema
+        generator = K8SNativeGenerator(kind=kind, k8s_version=k8s_version)
+        schema_path, schema_content = generator.generate(base_dir=output_dir)
+        
+        console.print(f"[green]✅ Schema generated: {schema_path}[/green]")
+        
+        # Generate blueprint if requested
+        if with_blueprint:
+            console.print("[blue]Generating blueprint...[/blue]")
+            
+            blueprint_code, bp_name, main_schema_name = generate_blueprint_from_schema(
+                schema_content, Path(schema_path)
+            )
+            
+            if bp_name:
+                # Save blueprint
+                blueprint_dir = Path(output_dir) / "library" / "blueprints"
+                blueprint_dir.mkdir(parents=True, exist_ok=True)
+                blueprint_path = blueprint_dir / f"{main_schema_name}.k"
+                
+                with open(blueprint_path, "w", encoding='utf-8') as f:
+                    f.write(blueprint_code)
+                
+                console.print(f"[green]✅ Blueprint generated: {blueprint_path}[/green]")
+            else:
+                console.print("[yellow]⚠️ Blueprint generation failed[/yellow]")
+        
+        console.print("\n[green]🎉 Generation completed successfully![/green]")
+        
+    except Exception as e:
+        console.print(f"[red]Error: {e}[/red]")
+        raise typer.Exit(1)
+
+
+@app.command()
 def guided(
     ai_model: str = typer.Option(None, "--ai-model", help="Enable AI explanations with specified Ollama model")
 ):

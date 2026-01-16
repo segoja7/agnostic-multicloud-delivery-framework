@@ -51,13 +51,80 @@ amdf list-crds [OPTIONS]
 # List all CRDs
 amdf list-crds
 
-# Filter by service
-amdf list-crds --filter ec2
-amdf list-crds -f istio
+# Filter by AWS resources
+amdf list-crds --filter aws
 
 # Use specific context
-amdf list-crds --context production-cluster
+amdf list-crds --context my-cluster
 ```
+
+### `amdf generate`
+
+Generate KCL schema and blueprint from a Custom Resource Definition.
+
+```bash
+amdf generate CRD_NAME [OPTIONS]
+```
+
+**Options:**
+
+| Option | Short | Type | Description |
+|--------|-------|------|-------------|
+| `--output` | `-o` | TEXT | Output directory (default: .) |
+| `--context` | `-c` | TEXT | Kubernetes context |
+| `--blueprint/--no-blueprint` | | BOOL | Generate blueprint (default: True) |
+
+**Examples:**
+
+```bash
+# Generate from CRD
+amdf generate instances.ec2.aws.upbound.io
+
+# Generate without blueprint
+amdf generate instances.ec2.aws.upbound.io --no-blueprint
+
+# Custom output directory
+amdf generate instances.ec2.aws.upbound.io --output ./schemas
+```
+
+### `amdf generate-k8s`
+
+Generate KCL schema and blueprint from native Kubernetes objects.
+
+```bash
+amdf generate-k8s KIND [OPTIONS]
+```
+
+**Options:**
+
+| Option | Short | Type | Description |
+|--------|-------|------|-------------|
+| `--version` | `-v` | TEXT | Kubernetes version (default: 1.35.0) |
+| `--output` | `-o` | TEXT | Output directory (default: .) |
+| `--blueprint/--no-blueprint` | | BOOL | Generate blueprint (default: True) |
+
+**Examples:**
+
+```bash
+# Generate Pod schema (latest K8s version)
+amdf generate-k8s Pod
+
+# Generate Service schema for specific K8s version
+amdf generate-k8s Service --version 1.30.0
+
+# Generate without blueprint
+amdf generate-k8s Deployment --no-blueprint
+
+# Custom output directory
+amdf generate-k8s ConfigMap --output ./k8s-schemas
+```
+
+**Supported Kubernetes Objects:**
+- Core: Pod, Service, ConfigMap, Secret, ServiceAccount
+- Apps: Deployment, ReplicaSet, DaemonSet, StatefulSet
+- Networking: Ingress, NetworkPolicy
+- Storage: PersistentVolume, PersistentVolumeClaim
+- And many more...
 
 **Output:**
 ```
