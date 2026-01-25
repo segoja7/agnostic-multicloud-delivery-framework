@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.2.1 (2026-01-25)
+
+### Bug Fixes
+
+- Read version dynamically from package metadata
+  ([`01e3fb1`](https://github.com/segoja7/agnostic-multicloud-delivery-framework/commit/01e3fb18c6ea52488ab25adf0aab28c752a5bcd8))
+
+
 ## v1.2.0 (2026-01-25)
 
 ### Features
