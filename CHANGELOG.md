@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.2.0 (2026-01-25)
+
+### Features
+
+- Add Kyverno policy integration and validation
+  ([`3597f46`](https://github.com/segoja7/agnostic-multicloud-delivery-framework/commit/3597f4654815065d63d01c2f2da71892f7159a55))
+
+
 ## v1.1.0 (2026-01-25)
 
 ### Bug Fixes
