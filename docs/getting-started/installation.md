@@ -11,16 +11,19 @@
 
 ### Kubernetes Setup
 
-Ensure access to a Kubernetes cluster with CRDs from any operator:
+AMDF works with any Kubernetes cluster running operators that provide Custom Resource Definitions (CRDs).
 
-- **Cloud Providers**: (AWS/GCP/Azure), ACK, Config Connector (GCP), Azure Service Operator
-- **Abstraction Layers**: Crossplane, KRO (Kubernetes Resource Orchestrator), KubeVela (OAM)
-- **Databases**: PostgreSQL Operator, MongoDB Operator, Redis Operator, CockroachDB Operator
+**Compatible with:**
+
+- **Cloud Providers**: ACK (AWS), Config Connector (GCP), Azure Service Operator
+- **Abstraction Layers**: Crossplane, KRO, KubeVela
+- **Databases**: PostgreSQL, MongoDB, Redis, CockroachDB operators
 - **Networking**: Istio, Cilium, Calico, Linkerd
-- **Monitoring**: Prometheus Operator, Grafana Operator, Jaeger Operator
+- **Observability**: Prometheus, Grafana, Jaeger operators
 - **CI/CD**: ArgoCD, Tekton, Flux
 - **Storage**: Rook, OpenEBS, Longhorn
-- **Agnostic CRD Support**: Works with any operator compliant with Kubernete
+- **Any operator**: AMDF is operator-agnostic and works with any CRD-compliant operator
+
 ## Installation Methods
 
 ### Method 1: PyPI Install (Recommended)
@@ -50,19 +53,19 @@ amdf list-crds
 
 ### MCP Interface
 
-Add to your `~/.kiro/settings/mcp.json`:
+Add to your MCP client configuration:
 
 ```json
 {
   "mcpServers": {
     "amdf": {
-      "command": "amdf-mcp",
-      "autoApprove": ["list_k8s_crds", "process_crd_to_kcl"]
+      "command": "amdf-mcp"
     }
   }
 }
 ```
 
+For specific MCP clients, refer to their documentation for configuration file locations.
 
 ## Environment Configuration
 

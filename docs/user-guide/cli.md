@@ -1,11 +1,11 @@
 # CLI Reference
 
-Complete reference for the AMDF command-line interface.
+Reference for the AMDF command-line interface.
 
 ## Installation
 
 ```bash
-pip install -e .
+pip install amdf
 ```
 
 ## Global Options
@@ -27,7 +27,7 @@ amdf version
 
 **Output:**
 ```
-AMDF version: 0.1.0
+AMDF version: x.y.z
 ```
 
 ### `amdf list-crds`
@@ -58,6 +58,54 @@ amdf list-crds --filter aws
 amdf list-crds --context my-cluster
 ```
 
+### `amdf list-k8s`
+
+List available native Kubernetes resources.
+
+```bash
+amdf list-k8s [OPTIONS]
+```
+
+**Options:**
+
+| Option | Short | Type | Default | Description |
+|--------|-------|------|---------|-------------|
+| `--filter` | `-f` | TEXT | None | Filter by kind or group |
+| `--version` | `-v` | TEXT | `1.35.0` | Kubernetes version |
+
+**Examples:**
+
+```bash
+# List all native K8s resources
+amdf list-k8s
+
+# Filter by resource type
+amdf list-k8s --filter pod
+amdf list-k8s --filter deployment
+amdf list-k8s --filter storage
+
+# Specify Kubernetes version
+amdf list-k8s --version 1.30.0
+
+# Combine filter and version
+amdf list-k8s --version 1.30.0 --filter networking
+```
+
+**Output:**
+```
+        Available Kubernetes Resources (v1.35.0)
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━┓
+┃ Kind                 ┃ API Group/Version ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━┩
+│ Pod                  │ v1                │
+│ Service              │ v1                │
+│ Deployment           │ apps/v1           │
+│ NetworkPolicy        │ networking/v1     │
+└──────────────────────┴───────────────────┘
+
+Found 79 Kubernetes resources
+```
+
 ### `amdf generate`
 
 Generate KCL schema and blueprint from a Custom Resource Definition.
@@ -68,23 +116,38 @@ amdf generate CRD_NAME [OPTIONS]
 
 **Options:**
 
-| Option | Short | Type | Description |
-|--------|-------|------|-------------|
-| `--output` | `-o` | TEXT | Output directory (default: .) |
-| `--context` | `-c` | TEXT | Kubernetes context |
-| `--blueprint/--no-blueprint` | | BOOL | Generate blueprint (default: True) |
+| Option | Short | Type | Default | Description |
+|--------|-------|------|---------|-------------|
+| `--output` | `-o` | TEXT | `.` | Output directory |
+| `--context` | `-c` | TEXT | None | Kubernetes context |
+| `--blueprint/--no-blueprint` | | BOOL | `True` | Generate blueprint |
+| `--policy-template/--no-policy-template` | | BOOL | `True` | Generate policy template |
 
 **Examples:**
 
 ```bash
-# Generate from CRD
+# Generate from CRD (includes schema, blueprint, policy, and main.k)
 amdf generate instances.ec2.aws.upbound.io
 
 # Generate without blueprint
 amdf generate instances.ec2.aws.upbound.io --no-blueprint
 
+# Generate without policy template
+amdf generate instances.ec2.aws.upbound.io --no-policy-template
+
 # Custom output directory
 amdf generate instances.ec2.aws.upbound.io --output ./schemas
+```
+
+**Output:**
+```
+Generating schema for CRD: instances.ec2.aws.upbound.io
+✅ Schema generated: library/models/ec2_aws_upbound_io/v1beta1/...
+✅ Blueprint generated: library/blueprints/Instance.k
+✅ Policy template created: library/policies/InstancePolicy.k
+✅ Example main.k generated: library/main.k
+
+🎉 Generation completed successfully!
 ```
 
 ### `amdf generate-k8s`
@@ -95,13 +158,17 @@ Generate KCL schema and blueprint from native Kubernetes objects.
 amdf generate-k8s KIND [OPTIONS]
 ```
 
+!!! note "Kind Names"
+    Kind names are case-sensitive and must match exactly (e.g., `Service` not `service`). Use `amdf list-k8s` to see available kinds.
+
 **Options:**
 
-| Option | Short | Type | Description |
-|--------|-------|------|-------------|
-| `--version` | `-v` | TEXT | Kubernetes version (default: 1.35.0) |
-| `--output` | `-o` | TEXT | Output directory (default: .) |
-| `--blueprint/--no-blueprint` | | BOOL | Generate blueprint (default: True) |
+| Option | Short | Type | Default | Description |
+|--------|-------|------|---------|-------------|
+| `--version` | `-v` | TEXT | `1.35.0` | Kubernetes version |
+| `--output` | `-o` | TEXT | `.` | Output directory |
+| `--blueprint/--no-blueprint` | | BOOL | `True` | Generate blueprint |
+| `--policy-template/--no-policy-template` | | BOOL | `True` | Generate policy template |
 
 **Examples:**
 
@@ -115,110 +182,53 @@ amdf generate-k8s Service --version 1.30.0
 # Generate without blueprint
 amdf generate-k8s Deployment --no-blueprint
 
+# Generate without policy template
+amdf generate-k8s Pod --no-policy-template
+
 # Custom output directory
 amdf generate-k8s ConfigMap --output ./k8s-schemas
 ```
 
 **Supported Kubernetes Objects:**
-- Core: Pod, Service, ConfigMap, Secret, ServiceAccount
-- Apps: Deployment, ReplicaSet, DaemonSet, StatefulSet
-- Networking: Ingress, NetworkPolicy
-- Storage: PersistentVolume, PersistentVolumeClaim
+- **Core**: Pod, Service, ConfigMap, Secret, ServiceAccount, PersistentVolume, PersistentVolumeClaim, Namespace, Node
+- **Apps**: Deployment, ReplicaSet, DaemonSet, StatefulSet
+- **Networking**: Ingress, NetworkPolicy, IngressClass
+- **Storage**: StorageClass, VolumeAttachment, CSIDriver
+- **RBAC**: Role, RoleBinding, ClusterRole, ClusterRoleBinding
+- **Batch**: Job, CronJob
+- **Autoscaling**: HorizontalPodAutoscaler
+- **Policy**: PodDisruptionBudget
 - And many more...
 
 **Output:**
 ```
-                          Available CRDs
-┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃ CRD Name                                                       ┃
-┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
-│ instances.ec2.aws.upbound.io                                   │
-│ vpcs.ec2.aws.upbound.io                                        │
-│ virtualservices.networking.istio.io                            │
-└────────────────────────────────────────────────────────────────┘
-
-Found 3 CRDs
-```
-
-### `amdf generate`
-
-Generate KCL schema and blueprint from a CRD.
-
-```bash
-amdf generate [OPTIONS] CRD_NAME
-```
-
-**Arguments:**
-
-| Argument | Type | Required | Description |
-|----------|------|----------|-------------|
-| `CRD_NAME` | TEXT | Yes | Name of the CRD to generate schema for |
-
-**Options:**
-
-| Option | Short | Type | Default | Description |
-|--------|-------|------|---------|-------------|
-| `--output` | `-o` | PATH | `.` | Output directory |
-| `--context` | `-c` | TEXT | None | Kubernetes context |
-| `--blueprint/--no-blueprint` | | BOOL | `True` | Generate blueprint |
-
-**Examples:**
-
-```bash
-# Basic generation
-amdf generate instances.ec2.aws.upbound.io
-
-# Custom output directory
-amdf generate instances.ec2.aws.upbound.io --output ./my-schemas
-
-# Skip blueprint generation
-amdf generate instances.ec2.aws.upbound.io --no-blueprint
-
-# Use specific context
-amdf generate instances.ec2.aws.upbound.io --context staging-cluster
-```
-
-**Output:**
-```
-Generating schema for CRD: instances.ec2.aws.upbound.io
-✅ Schema generated: library/models/ec2_aws_upbound_io/v1beta1/ec2_aws_upbound_io_v1beta1_Instance.k
-Generating blueprint...
-✅ Blueprint generated: library/blueprints/Instance.k
+Generating schema for Kubernetes Pod (v1.35.0)
+✅ Schema generated: library/models/k8s/v1/k8s_v1_Pod.k
+✅ Blueprint generated: library/blueprints/Pod.k
+✅ Policy template created: library/policies/PodPolicy.k
+✅ Example main.k generated: library/main.k
 
 🎉 Generation completed successfully!
 ```
 
-**Generated Files:**
-
-1. **Detailed Schema**: `library/models/{group}_{version}/{group}_{version}_{Kind}.k`
-   - Complete KCL schema with all fields
-   - Type-safe definitions
-   - Full documentation
-
-2. **Simple Blueprint**: `library/blueprints/{Kind}.k`
-   - User-friendly interface
-   - Common parameters exposed
-   - Simplified usage
-
 ### `amdf mcp-server`
 
-Start the MCP server for integration with MCP clients.
+Start the Model Context Protocol server.
 
 ```bash
 amdf mcp-server
 ```
 
-**Usage:**
-This command starts the MCP server that can be used with MCP clients like Kiro CLI.
+Exposes AMDF functionality through the MCP interface, enabling AI assistants and development tools to discover CRDs and generate schemas programmatically.
 
-**Configuration:**
-Configure the MCP server in your MCP client configuration:
+**MCP Client Configuration:**
+
 ```json
 {
   "mcpServers": {
     "amdf": {
-      "command": "amdf-mcp",
-      "autoApprove": ["list_k8s_crds", "process_crd_to_kcl"]
+      "command": "amdf",
+      "args": ["mcp-server"]
     }
   }
 }
@@ -226,7 +236,7 @@ Configure the MCP server in your MCP client configuration:
 
 ### `amdf guided`
 
-Guided schema generation with step-by-step workflow.
+Interactive schema generation with step-by-step workflow.
 
 ```bash
 amdf guided [OPTIONS]
@@ -238,143 +248,120 @@ amdf guided [OPTIONS]
 |--------|------|-------------|
 | `--ai-model` | TEXT | Enable AI explanations with specified Ollama model |
 
-#### Basic Guided Mode
-
-Interactive wizard that guides you through schema generation:
-
-```bash
-amdf guided
-```
-
 **Workflow:**
 
-1. **Filter CRDs** - Search by keyword or browse all
-2. **Select CRD** - Choose from numbered list
-3. **Generate Schema** - Automatic schema and blueprint creation
-4. **Summary** - Review generated files
+1. Choose resource type (CRD or Kubernetes native)
+2. Filter and select resource
+3. Generate schema, blueprint, and policies
+4. (Optional) Get AI explanation of generated files
 
-#### AI-Enhanced Mode
-
-Add AI explanations and usage examples:
+**Example:**
 
 ```bash
+# Basic mode
+amdf guided
+
+# With AI explanations (requires Ollama)
 amdf guided --ai-model qwen3-coder:30b
 ```
 
-**Prerequisites:**
+**Output:**
+```
+Step 1: Choose Resource Type
+1. CRD (Custom Resource Definition)
+2. Kubernetes Native (Pod, Service, Deployment, etc.)
+Select type [1/2] (1): 2
 
-- [Ollama](https://ollama.ai) installed and running
-- Model downloaded: `ollama pull qwen3-coder:30b`
+Step 3: Select Resource
+┏━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━┓
+┃ #    ┃ Kind       ┃ API Group/Version ┃
+┡━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━┩
+│ 1    │ Pod        │ v1                │
+│ 2    │ Service    │ v1                │
+└──────┴────────────┴───────────────────┘
+Select number (1-2): 1
 
-**Additional Step:**
-
-**AI Explanation** - Detailed explanation of generated files with usage examples
-
-**Example Session:**
-
-```bash
-$ amdf guided --ai-model qwen3-coder:30b
-🤖 Starting AMDF Guided Mode with qwen3-coder:30b
-
-Step 1: Filter CRDs
-Filter CRDs (or Enter for all): ec2
-
-Step 2: Select CRD (45 found)
-┌────┬─────────────────────────────────────┐
-│ #  │ CRD Name                            │
-├────┼─────────────────────────────────────┤
-│ 1  │ instances.ec2.aws.upbound.io        │
-│ 2  │ vpcs.ec2.aws.upbound.io             │
-└────┴─────────────────────────────────────┘
-Select number (1-2) or full name: 1
-
-Step 3: Generate Schema
-⚙️ Generating for: instances.ec2.aws.upbound.io...
-✅ Schema: library/models/.../Instance.k
-✅ Blueprint: library/blueprints/Instance.k
-
-Step 4: AI Explanation
-🤖 Getting explanation from qwen3-coder:30b...
-[AI provides detailed explanation and usage examples]
+⚙️ Generating for: Pod (v1.35.0)...
+✅ Schema: library/models/k8s/v1/k8s_v1_Pod.k
+✅ Blueprint: library/blueprints/Pod.k
+✅ Policy template: library/policies/PodPolicy.k
+✅ Example main.k: library/main.k
 
 🎉 Complete!
 ```
 
-## Workflows
+### `amdf validate`
 
-### Basic Workflow
-
-```bash
-# 1. Discover CRDs
-amdf list-crds --filter argo
-# 2. Generate schema
-amdf generate applicationsets.argoproj.io
-
-# 3. Use in KCL
-cat > appset.k << EOF
-import blueprints.Applicationset as appset
-
-app = appset.ApplicationsetBlueprint {
-    _metadataName = "myappset"
-    _namespace = "argocd"
-    _goTemplate = True
-    _goTemplateOptions = [
-        "missingkey=error"
-    ]
-    #omitted for brevity
-}
-EOF
-
-# 4. Render and apply
-kcl run appset.k | kubectl apply -f -
-```
-
-### Guided Workflow
+Validate Kubernetes manifests against Kyverno policies.
 
 ```bash
-# Interactive guided generation
-amdf guided
-
-# With AI explanations
-amdf guided --ai-model qwen3-coder:30b
-
-# Follow the prompts:
-# 1. Filter: "argo"
-# 2. Select: Choose from numbered list
-# 3. Generated files ready to use
+amdf validate MANIFEST [OPTIONS]
 ```
 
-### Multi-Service Setup
+**Arguments:**
+
+| Argument | Type | Required | Description |
+|----------|------|----------|-------------|
+| `MANIFEST` | PATH | Yes | Path to Kubernetes YAML manifest |
+
+**Options:**
+
+| Option | Short | Type | Description |
+|--------|-------|------|-------------|
+| `--policy` | `-p` | TEXT | Path to policy file/directory or URL (default: validates against cluster) |
+
+**Examples:**
 
 ```bash
-# Generate multiple related schemas
-amdf generate vpcs.ec2.aws.upbound.io
-amdf generate subnets.ec2.aws.upbound.io
-amdf generate instances.ec2.aws.upbound.io
+# Validate against cluster policies (default)
+amdf validate deployment.yaml
 
-# Create infrastructure stack
-cat > infrastructure.k << EOF
-import library.blueprints.Vpc
-import library.blueprints.Subnet
-import library.blueprints.Instance
+# Validate against local policy file
+amdf validate deployment.yaml --policy ./policies/require-labels.yaml
 
-vpc = Vpc.VpcBlueprint {
-    _metadataName = "main-vpc"
-    _cidrBlock = "10.0.0.0/16"
-}
+# Validate against policy directory
+amdf validate deployment.yaml --policy ./policies/
 
-subnet = Subnet.SubnetBlueprint {
-    _metadataName = "public-subnet"
-    _cidrBlock = "10.0.1.0/24"
-}
-
-instance = Instance.InstanceBlueprint {
-    _metadataName = "web-server"
-    _instanceType = "t3.medium"
-}
-EOF
+# Validate against remote policy
+amdf validate deployment.yaml --policy https://raw.githubusercontent.com/kyverno/policies/main/pod-security/baseline/disallow-privileged-containers/disallow-privileged-containers.yaml
 ```
 
+**Output (Success):**
+```
+✅ Validation passed
+
+Applying 1 policy rule(s) to 1 resource(s)...
+
+pass: 1, fail: 0, warn: 0, error: 0, skip: 0
+```
+
+**Output (Failure):**
+```
+❌ Validation failed
+
+Applying 1 policy rule(s) to 1 resource(s)...
+
+fail: 1, pass: 0, warn: 0, error: 0, skip: 0
+
+Policy require-labels -> Resource default/Deployment/nginx
+  autogen-require-labels: validation error: Label 'app' is required. Rule autogen-require-labels failed
+```
+
+**Prerequisites:**
+
+Kyverno CLI must be installed:
+
+```bash
+# macOS
+brew install kyverno
+
+# Linux
+curl -LO https://github.com/kyverno/kyverno/releases/download/v1.11.0/kyverno-cli_v1.11.0_linux_x86_64.tar.gz
+tar -xzf kyverno-cli_v1.11.0_linux_x86_64.tar.gz
+sudo mv kyverno /usr/local/bin/
+```
+
+---
 
 ## Troubleshooting
 

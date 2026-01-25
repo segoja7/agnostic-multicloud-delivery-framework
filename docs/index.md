@@ -5,22 +5,30 @@
 ![MCP](https://img.shields.io/badge/MCP-Server-green)
 ![Kubernetes](https://img.shields.io/badge/Kubernetes-CRDs-orange)
 
-**Transform any Kubernetes CRD into type-safe KCL schemas and developer-friendly blueprints**
+**Transform any Kubernetes CRD into type-safe schemas and developer-friendly blueprints using KCL**
 
 [Quick Start](getting-started/quick-start.md){ .md-button .md-button--primary }
 [Examples](examples/basic.md){ .md-button }
 
+---
+
 ## Why AMDF?
 
-Direct interaction with Kubernetes Custom Resource Definitions (CRDs) presents critical challenges:
+### The Problem: CRD Complexity at Scale
 
-- **❌ Security & Compliance Risks** Without strict schemas, misconfigurations are easy to commit and hard to validate.
+Modern Kubernetes environments present significant challenges:
 
-- **❌ Developer Velocity Bottleneck** Writing thousands of lines of YAML manually is slow, error-prone, and hard to reuse across teams.
+- **CRD Proliferation**: Production clusters typically run dozens of operators (Crossplane, Istio, ACK). Each CRD specification contains hundreds of fields with complex nesting and relationships.
 
-- **❌ Inefficient Feedback Loops**
-  Engineers waste valuable cycles waiting for CI/CD pipelines to fail, rather than catching configuration errors instantly in the IDE.
+- **Configuration Overhead**: YAML-based configuration is verbose and lacks type safety, leading to copy-paste patterns and maintenance burden.
 
+- **Steep Learning Curve**: Teams need deep Kubernetes expertise to effectively use infrastructure resources, creating bottlenecks.
+
+- **Delayed Feedback**: Configuration errors surface at deployment time rather than during development, slowing iteration cycles.
+
+- **Pattern Fragmentation**: Without standardization, teams develop inconsistent approaches, making knowledge transfer difficult.
+
+---
 
 ## The AMDF Solution
 
@@ -29,42 +37,148 @@ AMDF automatically transforms complex CRDs into simple, validated interfaces:
 ```mermaid
 graph LR
     A[Complex CRD] --> B[AMDF] --> C[Type-Safe Schema] --> D[Simple Blueprint]
-    style A fill:#ffcccc
-    style D fill:#ccffcc
+    style A fill:#f5f5f5
+    style D fill:#e8f5e9
 ```
 
-### What You Get
+### Key Benefits
 
 | Before AMDF | After AMDF |
 |-------------|------------|
-| Complex CRD Manifests | Streamlined Blueprints |
+| Verbose YAML configurations | Concise, type-safe definitions |
 | Runtime validation errors | Compile-time type checking |
-| Provider-specific patterns | Unified interface |
-| Manual documentation | Auto-generated examples |
+| Manual templates per team | Centralized, versioned modules |
+| Ad-hoc policy enforcement | Automated compliance checks |
+| Platform team dependency | Self-service infrastructure |
+
+---
+
+## How Teams Use AMDF
+
+### 🚀 For Platform Engineers
+
+**Challenge**: Managing numerous CRDs while supporting development teams requires significant effort.
+
+**AMDF Value**:
+- **Generate once, use everywhere**: Create reusable blueprints from any CRD in seconds
+- **Reduce cognitive load**: Developers use simple interfaces instead of complex specs
+- **Package & distribute**: Share modules via OCI registries (public/private)
+- **Version control**: Track changes and roll back when needed
+
+**Outcome**: Platform team scales efficiently, enabling developer productivity.
+
+### 🛡️ For DevOps & SREs
+
+**Challenge**: Maintaining configuration consistency and preventing deployment failures across environments.
+
+**AMDF Value**:
+- **Shift-left validation**: Catch errors at compile-time, not in production
+- **Policy templates**: Auto-generate validation rules from CRD schemas
+- **Compliance automation**: Enforce organizational security and resource standards
+- **Consistent patterns**: Eliminate configuration drift
+
+**Outcome**: Improved reliability and faster deployment cycles.
+
+### 💻 For Application Developers
+
+**Challenge**: Provisioning infrastructure requires deep Kubernetes expertise.
+
+**AMDF Value**:
+- **Simple interfaces**: Use blueprints with only essential fields exposed
+- **Type safety**: IDE autocomplete and validation as you type
+- **Clear examples**: Auto-generated `main.k` files show exactly how to use resources
+- **Self-service**: Provision infrastructure independently
+
+**Outcome**: Focus on application development, not infrastructure complexity.
+
+---
 
 ## Core Capabilities
 
-### 🔍 **Universal Discovery**
-Automatically finds and catalogs all CRDs in your cluster and supports native Kubernetes objects
+### 🔍 Universal Discovery
+- List all CRDs in your cluster with filtering
+- Discover native Kubernetes resources (Pod, Service, Deployment, etc.)
+- Support for any operator: Crossplane, Istio, ACK, KRO, custom CRDs
 
-### 🏗️ **Smart Generation**
+### 🏗️ Smart Generation
 
-- **The Library Model (Schema)** - Complete, type-safe representations of any Kubernetes resource.
+AMDF creates a complete toolkit for each resource:
 
-- **The Developer Interface (Blueprint)** - A concise, easy-to-read module that **exposes only essential configuration**.
+1. **Complete Schema** (`library/models/`)
+   - Full-fidelity, type-safe representation
+   - All fields with documentation
+   - For advanced use cases
 
-### 🤖 **AI-Enhanced Experience**
-Built-in AI assistant explains generated code and provides usage examples via Ollama integration.
+2. **Simple Blueprint** (`library/blueprints/`)
+   - Curated interface with essential fields
+   - Sensible defaults
+   - For day-to-day usage
 
-### 🔌 **Multiple Interfaces**
+3. **Policy Template** (`library/policies/`)
+   - Auto-generated validation rules
+   - Customizable compliance checks
+   - Leverages KCL's native validation (we make it easier)
 
-- **CLI Tool** - Direct command-line usage for CRDs and native K8s objects
-- **MCP Server** - Integration with AI development tools
-- **Guided Mode** - Interactive wizard for beginners
+4. **Usage Example** (`library/main.k`)
+   - Working code you can run immediately
+   - Shows best practices
+   - Includes policy application
+
+### 🛡️ Validation Made Easy
+
+While KCL provides powerful validation capabilities, AMDF makes them accessible:
+
+- **Auto-scaffolded policies**: We generate policy templates from CRD schemas
+- **Common checks included**: Security, resources, naming conventions
+- **Easy customization**: Uncomment what you need, add your own rules
+- **Compile-time feedback**: Errors in seconds, not minutes
+
+```kcl
+# AMDF generates this for you
+schema DeploymentPolicyMixin:
+    check:
+        _replicas >= 2, "Minimum 2 replicas for HA"
+        all container in _template.spec.containers {
+            "latest" not in container.image
+        }, "No 'latest' tags allowed"
+```
+
+### 🤖 AI-Native Experience
+
+- **MCP Server**: Standardized interface for AI development tools
+- **Guided Mode**: Interactive wizard with contextual assistance
+- **Local AI Integration**: Privacy-focused explanations via Ollama
+
+### 📦 Distribution & Reusability
+
+- Package modules in OCI registries
+- Share across teams and organizations
+- Version control and dependency management
+- GitOps-ready workflows
+
+---
 
 ## Architecture
 
 AMDF follows a clean, modular design:
+
+### Complete Architecture
+
+![AMDF Architecture](img/Diagram.png)
+
+The diagram above shows the complete end-to-end flow:
+
+- **Platform Team** uses AMDF CLI or MCP Server to generate KCL schemas from CRDs
+
+- **Core Logic Library** produces type-safe schemas, blueprints, and policies
+
+- **Foundational Packages** enable distribution via OCI Registry, Git, or YAML
+
+- **Product Teams/Devs** consume packages through GitOps workflows (Argo + KCL Plugin)
+
+- **Multi-cloud Providers** (AWS, GCP, Azure) receive validated configurations via Kubernetes
+
+### Core Engine Detail
 
 ```mermaid
 graph TB
@@ -78,11 +192,14 @@ graph TB
         DISC[CRD Discovery]
         GEN[Schema Generator]
         BP[Blueprint Creator]
+        POL[Policy Scaffolder]
     end
 
     subgraph "Output"
-        SCHEMA[KCL Schemas]
-        BLUE[KCL Blueprints]
+        SCHEMA[Type-Safe Schemas]
+        BLUE[Simple Blueprints]
+        POLICY[Policy Templates]
+        EXAMPLE[Usage Examples]
     end
 
     CLI --> DISC
@@ -90,20 +207,14 @@ graph TB
     GUI --> DISC
     DISC --> GEN
     GEN --> BP
+    GEN --> POL
     GEN --> SCHEMA
     BP --> BLUE
+    POL --> POLICY
+    GEN --> EXAMPLE
 ```
 
-## Real-World Impact
-
-### Platform Teams
-Transform hundreds of CRDs into consistent, validated schemas that development teams can actually use.
-
-### DevOps Engineers
-Eliminate configuration drift and deployment failures with compile-time validation.
-
-### Application Developers
-Focus on business logic instead of learning complex CRD specifications.
+---
 
 ## Getting Started
 
@@ -116,6 +227,7 @@ pip install amdf
 ```bash
 # Discover what's available
 amdf list-crds --filter aws
+amdf list-k8s --filter deployment
 
 # Generate schemas from CRDs
 amdf generate instances.ec2.aws.upbound.io
@@ -151,6 +263,8 @@ service = Service.ServiceBlueprint {
 amdf guided --ai-model qwen3-coder:30b
 ```
 
+---
+
 ## Ecosystem Integration
 
 AMDF orchestrates a best-in-class stack to deliver infrastructure as code:
@@ -159,7 +273,7 @@ AMDF orchestrates a best-in-class stack to deliver infrastructure as code:
   Provides the modeling language, validation logic, and schema generation capabilities.
 
 - **[CNCF Ecosystem](https://landscape.cncf.io/)** (Target Resource Model)
-  Compatible with **any Kubernetes CRD**, like as Crossplane, ACK, , KRO, Config Connector, and custom operators.
+  Compatible with **any Kubernetes CRD**, like Crossplane, ACK, KRO, Config Connector, and custom operators.
 
 - **[Kubernetes](https://kubernetes.io)** (Control Plane)
   Serves as the universal API and reconciliation engine that AMDF extends.

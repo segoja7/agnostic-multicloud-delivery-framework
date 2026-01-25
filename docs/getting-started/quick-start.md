@@ -1,11 +1,11 @@
 # Quick Start
 
-Start abstracting your infrastructure immediately using either the CLI or MCP interface.
+Get started with AMDF using either the CLI or MCP interface.
 
 ## Choose Your Interface
 
 === "CLI Interface"
-    Perfect for command-line workflows and automation.
+    Command-line workflows and automation.
 
     ```bash
     # Install AMDF
@@ -17,13 +17,15 @@ Start abstracting your infrastructure immediately using either the CLI or MCP in
 
 === "MCP Interface"
 
+    Add to your MCP client configuration:
+
     ```json
     {
-    "mcpServers": {
+      "mcpServers": {
         "amdf": {
-        "command": "amdf-mcp"
+          "command": "amdf-mcp"
         }
-    }
+      }
     }
     ```
 
@@ -46,9 +48,20 @@ kubectl get crds | head -10
     # List all CRDs
     amdf list-crds
 
-    # Filter by service
+    # Filter CRDs by service
     amdf list-crds --filter ec2
     amdf list-crds --filter istio
+
+    # List native Kubernetes resources
+    amdf list-k8s
+
+    # Filter K8s resources
+    amdf list-k8s --filter pod
+    amdf list-k8s --filter deployment
+    amdf list-k8s --filter storage
+
+    # Specify Kubernetes version
+    amdf list-k8s --version 1.30.0 --filter networking
     ```
 
 === "MCP"
@@ -72,7 +85,7 @@ virtualservices.networking.istio.io
     # Generate from CRDs
     amdf generate instances.ec2.aws.upbound.io
 
-    # Generate from native Kubernetes objects
+    # Generate from native Kubernetes objects (case-sensitive)
     amdf generate-k8s Pod
     amdf generate-k8s Service
 
@@ -90,15 +103,36 @@ virtualservices.networking.istio.io
     "Generate Service schema"
     ```
 
+!!! note "Kubernetes Kind Names"
+    Kind names are case-sensitive and must match exactly (e.g., `Service` not `service`, `Pod` not `pod`). Use `amdf list-k8s` to see the correct names.
+
 This creates:
 
 **For CRDs:**
-- **Detailed Schema**: `library/models/ec2_aws_upbound_io/v1beta1/ec2_aws_upbound_io_v1beta1_Instance.k`
-- **Simple Blueprint**: `library/blueprints/Instance.k`
+```
+library/
+├── models/
+│   └── ec2_aws_upbound_io/v1beta1/
+│       └── ec2_aws_upbound_io_v1beta1_Instance.k    # Complete schema
+├── blueprints/
+│   └── Instance.k                                    # Simplified interface
+├── policies/
+│   └── InstancePolicy.k                              # Custom validation template
+└── main.k                                            # Usage example
+```
 
 **For Native K8s Objects:**
-- **Detailed Schema**: `library/models/k8s/v1/k8s_v1_Pod.k`
-- **Simple Blueprint**: `library/blueprints/Pod.k`
+```
+library/
+├── models/
+│   └── k8s/v1/
+│       └── k8s_v1_Pod.k                              # Complete schema
+├── blueprints/
+│   └── Pod.k                                         # Simplified interface
+├── policies/
+│   └── PodPolicy.k                                   # Custom validation template
+└── main.k                                            # Usage example
+```
 
 ## Step 4: Use the Generated Blueprints
 
@@ -106,25 +140,25 @@ Create your first infrastructure configuration:
 
 === "Crossplane Resource"
     ```kcl
-    import library.blueprints.Instance
+    import blueprints.Instance
 
-    # Production EC2
+    # EC2 Instance configuration
     webServer = Instance.InstanceBlueprint {
-        _metadataName = "my-web-server"
+        _metadataName = "web-server"
         _providerConfig = "default"
         _instanceType = "t3.medium"
         _region = "us-east-1"
 
-        # Security best practices
+        # Security configuration
         _metadataOptions = [{
-            httpTokens = "required"  # IMDSv2
+            httpTokens = "required"
         }]
         _rootBlockDevice = [{
             encrypted = True
         }]
 
         _tags = {
-            Name = "my-web-server"
+            Name = "web-server"
             Environment = "production"
         }
     }
@@ -132,10 +166,10 @@ Create your first infrastructure configuration:
 
 === "Native Kubernetes"
     ```kcl
-    import library.blueprints.Service
-    import library.blueprints.Deployment
+    import blueprints.Service
+    import blueprints.Deployment
 
-    # Service
+    # Service configuration
     service = Service.ServiceBlueprint {
         _metadataName = "nginx"
         _namespace = "demo"
@@ -145,7 +179,7 @@ Create your first infrastructure configuration:
         _type = "ClusterIP"
     }
 
-    # Deployment
+    # Deployment configuration
     deployment = Deployment.DeploymentBlueprint {
         _metadataName = "nginx"
         _namespace = "demo"
@@ -157,7 +191,7 @@ Create your first infrastructure configuration:
             spec = {
                 containers = [{
                     name = "nginx"
-                    image = "nginx:latest"
+                    image = "nginx:1.25"
                     ports = [{containerPort = 80}]
                 }]
             }
