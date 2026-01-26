@@ -67,6 +67,8 @@ nav:
   - User Guide:
     - CLI Reference: user-guide/cli.md
     - MCP Integration: user-guide/mcp.md
+    - Policy Templates: user-guide/policy-templates.md
+    - Kyverno Validation: user-guide/kyverno-validation.md
   - Examples:
     - Basic Usage: examples/basic.md
 

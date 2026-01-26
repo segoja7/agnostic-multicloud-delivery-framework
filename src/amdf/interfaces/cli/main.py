@@ -172,6 +172,52 @@ def mcp_server():
 
 
 @app.command()
+def validate(
+    manifest_path: str = typer.Argument(..., help="Path to Kubernetes manifest YAML"),
+    policy_path: str = typer.Option(None, "--policy", "-p", help="Path to specific policy file/directory. If not provided, validates against cluster policies (--cluster)")
+):
+    """
+    [PREVIEW] Validate Kubernetes manifest against Kyverno policies
+    
+    By default, validates against policies in the cluster. Use --policy to validate against specific local policies instead.
+    This command is in preview and may change in future versions.
+    """
+    try:
+        console.print("[yellow]⚠️  This feature is in PREVIEW[/yellow]")
+        
+        from ...core.logic.kyverno_validator import KyvernoValidator
+        
+        if policy_path:
+            console.print(f"[blue]Validating manifest: {manifest_path} against policy: {policy_path}[/blue]")
+        else:
+            console.print(f"[blue]Validating manifest: {manifest_path} against cluster policies[/blue]")
+        
+        validator = KyvernoValidator()
+        if not validator.is_available():
+            console.print("[red]❌ Kyverno CLI not found. Install with: curl -L https://github.com/kyverno/kyverno/releases/latest/download/kyverno-cli_linux_x86_64.tar.gz | tar -xz && sudo mv kyverno /usr/local/bin/[/red]")
+            raise typer.Exit(1)
+        
+        # Si hay policy_path, no usar cluster. Si no hay policy_path, usar cluster
+        use_cluster = policy_path is None
+        
+        result = validator.validate_manifest(
+            manifest_path=manifest_path,
+            use_cluster=use_cluster,
+            policy_path=policy_path
+        )
+        
+        if result.get("success"):
+            console.print("[green]✅ Validation passed[/green]")
+        else:
+            console.print(f"[red]❌ Validation failed: {result.get('error', 'Unknown error')}[/red]")
+            raise typer.Exit(1)
+            
+    except Exception as e:
+        console.print(f"[red]Error: {e}[/red]")
+        raise typer.Exit(1)
+
+
+@app.command()
 def version():
     """Show AMDF version"""
     from ... import __version__
