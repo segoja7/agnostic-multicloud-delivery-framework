@@ -7,6 +7,7 @@ from rich.console import Console
 from rich.table import Table
 
 from ...core.logic.generator import list_available_crds, KCLSchemaGenerator
+from ...core.logic.k8s_source import list_available_k8s_kinds
 from ...core.logic.blueprint import generate_blueprint_from_schema
 from pathlib import Path
 
@@ -42,6 +43,35 @@ def list_crds(
         
         console.print(table)
         console.print(f"\n[green]Found {len(crds)} CRDs[/green]")
+        
+    except Exception as e:
+        console.print(f"[red]Error: {e}[/red]")
+        raise typer.Exit(1)
+
+
+@app.command()
+def list_k8s(
+    filter_text: str = typer.Option(None, "--filter", "-f", help="Filter Kubernetes kinds by text")
+):
+    """List available native Kubernetes kinds"""
+    try:
+        kinds = list_available_k8s_kinds()
+        
+        if filter_text:
+            kinds = [kind for kind in kinds if filter_text.lower() in kind.lower()]
+        
+        if not kinds:
+            console.print("[yellow]No Kubernetes kinds found[/yellow]")
+            return
+        
+        table = Table(title="Available Kubernetes Kinds")
+        table.add_column("Kind", style="cyan")
+        
+        for kind in kinds:
+            table.add_row(kind)
+        
+        console.print(table)
+        console.print(f"\n[green]Found {len(kinds)} kinds[/green]")
         
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
@@ -87,6 +117,35 @@ def generate(
                 console.print("[yellow]⚠️ Blueprint generation failed[/yellow]")
         
         console.print("\n[green]🎉 Generation completed successfully![/green]")
+        
+    except Exception as e:
+        console.print(f"[red]Error: {e}[/red]")
+        raise typer.Exit(1)
+
+
+@app.command()
+def list_k8s(
+    filter_text: str = typer.Option(None, "--filter", "-f", help="Filter kinds by text"),
+):
+    """List available native Kubernetes kinds for schema generation"""
+    try:
+        kinds = list_available_k8s_kinds()
+        
+        if filter_text:
+            kinds = [kind for kind in kinds if filter_text.lower() in kind.lower()]
+        
+        if not kinds:
+            console.print("[yellow]No kinds found[/yellow]")
+            return
+        
+        table = Table(title="Available Kubernetes Kinds")
+        table.add_column("Kind", style="cyan")
+        
+        for kind in kinds:
+            table.add_row(kind)
+        
+        console.print(table)
+        console.print(f"\n[green]Found {len(kinds)} kinds[/green]")
         
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")

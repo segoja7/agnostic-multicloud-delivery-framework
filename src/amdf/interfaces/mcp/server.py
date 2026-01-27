@@ -3,15 +3,16 @@ from pathlib import Path
 from ...core.logic.generator import KCLSchemaGenerator, list_available_crds, init_kcl_module_if_needed
 from ...core.logic.k8s_generator import K8SNativeGenerator
 from ...core.logic.blueprint import generate_blueprint_from_schema
+from ...core.logic.k8s_source import list_available_k8s_kinds
 
-# Definimos el servidor
+# Define the server
 server = FastMCP("kcl-schema-generator")
 
 @server.tool()
 def list_k8s_crds(filter_text: str = None, context: str = None) -> list[str]:
     """
-    Lista los Custom Resource Definitions (CRDs) disponibles en el cluster de Kubernetes.
-    Opcionalmente filtra por texto.
+    Lists the Custom Resource Definitions (CRDs) available in the Kubernetes cluster.
+    Optionally filters by text.
     """
     try:
         crds = list_available_crds(context)
@@ -19,17 +20,31 @@ def list_k8s_crds(filter_text: str = None, context: str = None) -> list[str]:
             return [c for c in crds if filter_text.lower() in c.lower()]
         return crds
     except Exception as e:
-        return [f"Error al listar CRDs: {str(e)}"]
+        return [f"Error listing CRDs: {str(e)}"]
+
+@server.tool()
+def list_k8s_kinds(filter_text: str = None) -> list[str]:
+    """
+    Lists the native Kubernetes resource kinds available for schema generation.
+    Optionally filters by text.
+    """
+    try:
+        kinds = list_available_k8s_kinds()
+        if filter_text:
+            return [k for k in kinds if filter_text.lower() in k.lower()]
+        return kinds
+    except Exception as e:
+        return [f"Error listing K8s kinds: {str(e)}"]
 
 @server.tool()
 def process_crd_to_kcl(crd_name: str, context: str = None) -> str:
     """
-    Flujo completo:
-    1. Extrae el CRD de Kubernetes.
-    2. Genera el Schema KCL detallado en 'library/models'.
-    3. Genera el Blueprint KCL simplificado en 'library/blueprints'.
+    Full workflow:
+    1. Extracts the CRD from Kubernetes.
+    2. Generates the detailed KCL Schema in 'library/models'.
+    3. Generates the simplified KCL Blueprint in 'library/blueprints'.
 
-    Retorna la ubicación de los archivos generados.
+    Returns the location of the generated files.
     """
     try:
         # Step 1: Generate Detailed Schema
@@ -59,20 +74,20 @@ def process_crd_to_kcl(crd_name: str, context: str = None) -> str:
 
         output_bp_path.write_text(blueprint_code, encoding='utf-8')
 
-        return f"""✅ Proceso completado exitosamente.
+        return f"""✅ Process completed successfully.
 
-1. Schema Detallado (Backend):
+1. Detailed Schema (Backend):
    {schema_path}
 
-2. Blueprint Simplificado (Frontend):
+2. Simplified Blueprint (Frontend):
    {output_bp_path}
 
-Puedes usar el blueprint así:
+You can use the blueprint like this:
 
 import library.blueprints.{main_schema_name}
 
 {main_schema_name}.{bp_name} {{
-    _metadataName = "mi-recurso"
+    _metadataName = "my-resource"
     ...
 }}
 """

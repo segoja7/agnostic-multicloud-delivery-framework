@@ -4,7 +4,37 @@ Kubernetes native resource schema source using Kubernetes OpenAPI spec.
 
 import json
 import urllib.request
-from typing import Dict
+from typing import Dict, List
+
+# Map common kinds to their API versions and full schema names
+resource_map = {
+    "Pod": ("v1", "io.k8s.api.core.v1.Pod"),
+    "Service": ("v1", "io.k8s.api.core.v1.Service"),
+    "ConfigMap": ("v1", "io.k8s.api.core.v1.ConfigMap"),
+    "Secret": ("v1", "io.k8s.api.core.v1.Secret"),
+    "Namespace": ("v1", "io.k8s.api.core.v1.Namespace"),
+    "PersistentVolume": ("v1", "io.k8s.api.core.v1.PersistentVolume"),
+    "PersistentVolumeClaim": ("v1", "io.k8s.api.core.v1.PersistentVolumeClaim"),
+    "ServiceAccount": ("v1", "io.k8s.api.core.v1.ServiceAccount"),
+    "Deployment": ("apps/v1", "io.k8s.api.apps.v1.Deployment"),
+    "StatefulSet": ("apps/v1", "io.k8s.api.apps.v1.StatefulSet"),
+    "DaemonSet": ("apps/v1", "io.k8s.api.apps.v1.DaemonSet"),
+    "ReplicaSet": ("apps/v1", "io.k8s.api.apps.v1.ReplicaSet"),
+    "Ingress": ("networking.k8s.io/v1", "io.k8s.api.networking.v1.Ingress"),
+    "NetworkPolicy": ("networking.k8s.io/v1", "io.k8s.api.networking.v1.NetworkPolicy"),
+    "Job": ("batch/v1", "io.k8s.api.batch.v1.Job"),
+    "CronJob": ("batch/v1", "io.k8s.api.batch.v1.CronJob"),
+    "HorizontalPodAutoscaler": ("autoscaling/v2", "io.k8s.api.autoscaling.v2.HorizontalPodAutoscaler"),
+    "Role": ("rbac.authorization.k8s.io/v1", "io.k8s.api.rbac.v1.Role"),
+    "RoleBinding": ("rbac.authorization.k8s.io/v1", "io.k8s.api.rbac.v1.RoleBinding"),
+    "ClusterRole": ("rbac.authorization.k8s.io/v1", "io.k8s.api.rbac.v1.ClusterRole"),
+    "ClusterRoleBinding": ("rbac.authorization.k8s.io/v1", "io.k8s.api.rbac.v1.ClusterRoleBinding"),
+}
+
+
+def list_available_k8s_kinds() -> List[str]:
+    """Lists the native Kubernetes kinds available for schema generation."""
+    return sorted(list(resource_map.keys()))
 
 
 def get_k8s_native_schema(kind: str, k8s_version: str = "1.35.0") -> Dict:
