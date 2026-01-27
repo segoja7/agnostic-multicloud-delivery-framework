@@ -179,6 +179,6 @@ staging = Deployment.DeploymentBlueprint {
 
 ## Resources
 
-- [CLI Reference](../user-guide/cli.md)
+- [CLI Reference](../cli/overview.md)
 - [Policy Templates](../user-guide/policy-templates.md)
 - [MCP Integration](../user-guide/mcp.md)

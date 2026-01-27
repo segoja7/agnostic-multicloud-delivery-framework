@@ -7,7 +7,7 @@
 - **Python 3.10+**
 - **kubectl** configured and accessible
 - **Kubernetes cluster** with CRDs installed
-- **KCL** (optional, for schema validation)
+- **KCL** CLI for schema validation
 
 ### Kubernetes Setup
 

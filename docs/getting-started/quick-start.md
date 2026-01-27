@@ -356,7 +356,7 @@ Assistant: [Generates native Kubernetes schemas and blueprints]
 
 ## Next Steps
 
-- [CLI Reference](../user-guide/cli.md) - Complete CLI documentation
+- [CLI Reference](../cli/overview.md) - Complete CLI documentation
 - [MCP Integration](../user-guide/mcp.md) - Advanced MCP usage
 - [Examples](../examples/basic.md) - More detailed examples
 

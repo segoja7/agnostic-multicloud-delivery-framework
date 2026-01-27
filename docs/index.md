@@ -105,24 +105,21 @@ graph LR
 AMDF creates a complete toolkit for each resource:
 
 1. **Complete Schema** (`library/models/`)
-   - Full-fidelity, type-safe representation
-   - All fields with documentation
-   - For advanced use cases
-
+    - Full-fidelity, type-safe representation
+    - All fields with documentation
+    - For advanced use cases
 2. **Simple Blueprint** (`library/blueprints/`)
-   - Curated interface with essential fields
-   - Sensible defaults
-   - For day-to-day usage
-
+    - Curated interface with essential fields
+    - Sensible defaults
+    - For day-to-day usage
 3. **Policy Template** (`library/policies/`)
-   - Auto-generated validation rules
-   - Customizable compliance checks
-   - Leverages KCL's native validation (we make it easier)
-
+    - Auto-generated validation rules
+    - Customizable compliance checks
+    - Leverages KCL's native validation (we make it easier)
 4. **Usage Example** (`library/main.k`)
-   - Working code you can run immediately
-   - Shows best practices
-   - Includes policy application
+    - Working code you can run immediately
+    - Shows best practices
+    - Includes policy application
 
 ### 🛡️ Validation Made Easy
 
@@ -131,7 +128,7 @@ While KCL provides powerful validation capabilities, AMDF makes them accessible:
 - **Auto-scaffolded policies**: We generate policy templates from CRD schemas
 - **Common checks included**: Security, resources, naming conventions
 - **Easy customization**: Uncomment what you need, add your own rules
-- **Compile-time feedback**: Errors in seconds, not minutes
+- **Compile-time feedback**: Fast validation during development
 
 ```kcl
 # AMDF generates this for you
@@ -147,7 +144,7 @@ schema DeploymentPolicyMixin:
 
 - **MCP Server**: Standardized interface for AI development tools
 - **Guided Mode**: Interactive wizard with contextual assistance
-- **Local AI Integration**: Privacy-focused explanations via Ollama
+- **Local AI Integration**: Offline assistance with Ollama
 
 ### 📦 Distribution & Reusability
 
@@ -164,7 +161,7 @@ AMDF follows a clean, modular design:
 
 ### Complete Architecture
 
-![AMDF Architecture](img/Diagram.png)
+![AMDF Architecture](assets/diagram.png)
 
 The diagram above shows the complete end-to-end flow:
 
@@ -174,7 +171,7 @@ The diagram above shows the complete end-to-end flow:
 
 - **Foundational Packages** enable distribution via OCI Registry, Git, or YAML
 
-- **Product Teams/Devs** consume packages through GitOps workflows (Argo + KCL Plugin)
+- **Product Teams/Devs** consume packages locally via imports or through GitOps workflows (Argo + KCL Plugin)
 
 - **Multi-cloud Providers** (AWS, GCP, Azure) receive validated configurations via Kubernetes
 
@@ -279,7 +276,7 @@ AMDF orchestrates a best-in-class stack to deliver infrastructure as code:
   Serves as the universal API and reconciliation engine that AMDF extends.
 
 - **[Ollama](https://ollama.ai)** (Local Intelligence)
-  Powers the integrated AI assistant for offline, privacy-focused schema explanations and guidance.
+  Powers the integrated AI assistant for offline schema explanations and guidance.
 
 - **[Model Context Protocol (MCP)](https://modelcontextprotocol.io)** (Agentic Interface)
   Exposes AMDF as a standardized server, allowing AI clients to directly interact with, query, and generate infrastructure.
