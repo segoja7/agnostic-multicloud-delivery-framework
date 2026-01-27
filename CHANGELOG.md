@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.4.0 (2026-01-27)
+
+### Features
+
+- Add list-k8s in cli and mcp
+  ([`d561b35`](https://github.com/segoja7/agnostic-multicloud-delivery-framework/commit/d561b350b460c82f0185580da1cc276e8e50bff7))
+
+
 ## v1.3.0 (2026-01-25)
 
 ### Features
