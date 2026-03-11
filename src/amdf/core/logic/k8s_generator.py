@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Dict, Any, Tuple
 
 from .generator import to_pascal_case, init_kcl_module_if_needed
-from .policy_scaffolder import generate_k8s_policy_template
+from .policy_scaffolder import generate_k8s_policy_template, generate_main_k_template
 
 INDENT = "    "
 
@@ -261,5 +261,12 @@ class K8SNativeGenerator:
         
         with open(policy_path, "w", encoding='utf-8') as f:
             f.write(policy_content)
+        
+        # Generate main.k with usage examples
+        main_k_path = Path(base_dir) / "library" / "main.k"
+        if not main_k_path.exists() or main_k_path.read_text().strip() == "The_first_kcl_program = 'Hello World!'":
+            main_k_content = generate_main_k_template(self.kind, has_policies=True)
+            with open(main_k_path, "w", encoding='utf-8') as f:
+                f.write(main_k_content)
         
         return str(file_path), final_content

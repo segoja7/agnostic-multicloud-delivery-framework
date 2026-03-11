@@ -259,6 +259,13 @@ class KCLSchemaGenerator:
         
         with open(policy_path, "w", encoding='utf-8') as f:
             f.write(policy_content)
+        
+        # Generate main.k with usage examples
+        main_k_path = Path(base_dir) / "library" / "main.k"
+        if not main_k_path.exists() or main_k_path.read_text().strip() == "The_first_kcl_program = 'Hello World!'":
+            main_k_content = generate_main_k_template(kind, has_policies=True)
+            with open(main_k_path, "w", encoding='utf-8') as f:
+                f.write(main_k_content)
 
         return str(output_path), file_content
 
