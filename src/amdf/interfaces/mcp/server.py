@@ -74,13 +74,17 @@ def process_crd_to_kcl(crd_name: str, context: str = None) -> str:
 
         output_bp_path.write_text(blueprint_code, encoding='utf-8')
 
+        # Check if policy was generated
+        policy_path = Path(base_dir) / "library" / "policies" / f"{main_schema_name}Policy.k"
+        policy_status = f"\n3. Policy Template:\n   {policy_path}" if policy_path.exists() else ""
+
         return f"""✅ Process completed successfully.
 
 1. Detailed Schema (Backend):
    {schema_path}
 
 2. Simplified Blueprint (Frontend):
-   {output_bp_path}
+   {output_bp_path}{policy_status}
 
 You can use the blueprint like this:
 
@@ -127,13 +131,17 @@ def process_k8s_to_kcl(kind: str, k8s_version: str = "1.35.0") -> str:
         output_bp_path = blueprint_dir / f"{main_schema_name}.k"
         output_bp_path.write_text(blueprint_code, encoding='utf-8')
         
+        # Check if policy was generated
+        policy_path = Path(base_dir) / "library" / "policies" / f"{kind}Policy.k"
+        policy_status = f"\n3. Policy Template:\n   {policy_path}" if policy_path.exists() else ""
+        
         return f"""✅ Kubernetes {kind} schema generated successfully (v{k8s_version}).
 
 1. Detailed Schema (Backend):
    {schema_path}
 
 2. Simplified Blueprint (Frontend):
-   {output_bp_path}
+   {output_bp_path}{policy_status}
 
 Usage example:
 
