@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Dict, Any, Tuple
 
 from .generator import to_pascal_case, init_kcl_module_if_needed
+from .policy_scaffolder import generate_k8s_policy_template
 
 INDENT = "    "
 
@@ -249,5 +250,16 @@ class K8SNativeGenerator:
         
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(final_content)
+        
+        # Generate policy template
+        policy_content = generate_k8s_policy_template(self.kind)
+        
+        # Save policy template
+        policy_dir = Path(base_dir) / "library" / "policies"
+        policy_dir.mkdir(parents=True, exist_ok=True)
+        policy_path = policy_dir / f"{self.kind}Policy.k"
+        
+        with open(policy_path, "w", encoding='utf-8') as f:
+            f.write(policy_content)
         
         return str(file_path), final_content

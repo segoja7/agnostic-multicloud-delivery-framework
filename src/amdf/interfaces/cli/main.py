@@ -95,6 +95,12 @@ def generate(
         
         console.print(f"[green]✅ Schema generated: {schema_path}[/green]")
         
+        # Check if policy was generated
+        kind_from_path = Path(schema_path).stem.split('_')[-1]
+        policy_path = Path(output_dir) / "library" / "policies" / f"{kind_from_path}Policy.k"
+        if policy_path.exists():
+            console.print(f"[green]✅ Policy template: {policy_path}[/green]")
+        
         # Generate blueprint if requested
         if with_blueprint:
             console.print("[blue]Generating blueprint...[/blue]")
@@ -113,39 +119,15 @@ def generate(
                     f.write(blueprint_code)
                 
                 console.print(f"[green]✅ Blueprint generated: {blueprint_path}[/green]")
+                
+                # Show policy path if exists
+                policy_path = Path(output_dir) / "library" / "policies" / f"{main_schema_name}Policy.k"
+                if policy_path.exists():
+                    console.print(f"[green]✅ Policy template: {policy_path}[/green]")
             else:
                 console.print("[yellow]⚠️ Blueprint generation failed[/yellow]")
         
         console.print("\n[green]🎉 Generation completed successfully![/green]")
-        
-    except Exception as e:
-        console.print(f"[red]Error: {e}[/red]")
-        raise typer.Exit(1)
-
-
-@app.command()
-def list_k8s(
-    filter_text: str = typer.Option(None, "--filter", "-f", help="Filter kinds by text"),
-):
-    """List available native Kubernetes kinds for schema generation"""
-    try:
-        kinds = list_available_k8s_kinds()
-        
-        if filter_text:
-            kinds = [kind for kind in kinds if filter_text.lower() in kind.lower()]
-        
-        if not kinds:
-            console.print("[yellow]No kinds found[/yellow]")
-            return
-        
-        table = Table(title="Available Kubernetes Kinds")
-        table.add_column("Kind", style="cyan")
-        
-        for kind in kinds:
-            table.add_row(kind)
-        
-        console.print(table)
-        console.print(f"\n[green]Found {len(kinds)} kinds[/green]")
         
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
@@ -170,6 +152,11 @@ def generate_k8s(
         schema_path, schema_content = generator.generate(base_dir=output_dir)
         
         console.print(f"[green]✅ Schema generated: {schema_path}[/green]")
+        
+        # Check if policy was generated
+        policy_path = Path(output_dir) / "library" / "policies" / f"{kind}Policy.k"
+        if policy_path.exists():
+            console.print(f"[green]✅ Policy template: {policy_path}[/green]")
         
         # Generate blueprint if requested
         if with_blueprint:

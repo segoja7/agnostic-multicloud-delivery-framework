@@ -3,6 +3,7 @@ import os
 import subprocess
 import textwrap
 from pathlib import Path
+from .policy_scaffolder import PolicyScaffolder, generate_main_k_template
 
 # Format constants
 INDENT = "    "
@@ -243,6 +244,21 @@ class KCLSchemaGenerator:
         
         with open(output_path, "w", encoding='utf-8') as f:
             f.write(file_content)
+
+        # Generate policy template
+        policy_scaffolder = PolicyScaffolder()
+        # Get the OpenAPI schema from the CRD
+        crd_spec = self.crd_json["spec"]
+        openapi_schema = crd_spec["versions"][0]["schema"]["openAPIV3Schema"]
+        policy_content = policy_scaffolder.generate(kind, openapi_schema)
+        
+        # Save policy template
+        policy_dir = Path(base_dir) / "library" / "policies"
+        policy_dir.mkdir(parents=True, exist_ok=True)
+        policy_path = policy_dir / f"{kind}Policy.k"
+        
+        with open(policy_path, "w", encoding='utf-8') as f:
+            f.write(policy_content)
 
         return str(output_path), file_content
 
