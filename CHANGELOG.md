@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v1.6.0 (2026-07-07)
+
+### Documentation
+
+- Align documentation with current tool behavior
+  ([`bce4c8b`](https://github.com/segoja7/agnostic-multicloud-delivery-framework/commit/bce4c8bf798e1c3a86867aa2f3e6a7437cea8c30))
+
+### Features
+
+- Remove Ollama integration and drop unused dependencies
+  ([`7a0d48a`](https://github.com/segoja7/agnostic-multicloud-delivery-framework/commit/7a0d48a1aeb31ddbdbc40445a20f0325beb16933))
+
+
 ## v1.5.0 (2026-07-07)
 
 ### Bug Fixes
