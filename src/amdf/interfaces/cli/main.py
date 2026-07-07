@@ -187,19 +187,12 @@ def generate_k8s(
 
 
 @app.command()
-def guided(
-    ai_model: str = typer.Option(None, "--ai-model", help="Enable AI explanations with specified Ollama model")
-):
+def guided():
     """Guided schema generation with step-by-step workflow"""
     try:
-        if ai_model:
-            console.print(f"[blue]🤖 Starting AMDF Guided Mode with {ai_model}[/blue]")
-            from .guided import start_guided_mode
-            start_guided_mode(ai_model)
-        else:
-            console.print("[blue]🔧 Starting AMDF Guided Mode[/blue]")
-            from .guided import start_guided_mode
-            start_guided_mode(None)
+        console.print("[blue]🔧 Starting AMDF Guided Mode[/blue]")
+        from .guided import start_guided_mode
+        start_guided_mode()
     except Exception as e:
         console.print(f"[red]Error starting guided mode: {e}[/red]")
         raise typer.Exit(1)
