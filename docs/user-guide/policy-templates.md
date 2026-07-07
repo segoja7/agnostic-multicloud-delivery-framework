@@ -33,8 +33,11 @@ Edit `policies/DeploymentPolicy.k`:
 ```kcl
 schema DeploymentPolicyMixin:
     check:
-        # Uncomment checks you want to enforce
-        _replicas >= 2, "Minimum 2 replicas for HA"
+        # Uncomment checks you want to enforce.
+        # Unset optional fields are Undefined in KCL: use `!= Undefined` to
+        # require a field, or guard constraints with `== Undefined or ...`
+        # so they only apply when the field is set.
+        _replicas == Undefined or _replicas >= 2, "Minimum 2 replicas for HA"
 
         all container in _template.spec.containers {
             not container.image.endswith(":latest")

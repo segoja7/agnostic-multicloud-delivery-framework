@@ -144,7 +144,6 @@ schema DeploymentPolicyMixin:
 
 - **MCP Server**: Standardized interface for AI development tools
 - **Guided Mode**: Interactive wizard with contextual assistance
-- **Local AI Integration**: Offline assistance with Ollama
 
 ### 📦 Distribution & Reusability
 
@@ -256,8 +255,8 @@ service = Service.ServiceBlueprint {
 
 ### Interactive Mode
 ```bash
-# Guided experience with AI explanations
-amdf guided --ai-model qwen3-coder:30b
+# Step-by-step guided generation
+amdf guided
 ```
 
 ---
@@ -274,9 +273,6 @@ AMDF orchestrates a best-in-class stack to deliver infrastructure as code:
 
 - **[Kubernetes](https://kubernetes.io)** (Control Plane)
   Serves as the universal API and reconciliation engine that AMDF extends.
-
-- **[Ollama](https://ollama.ai)** (Local Intelligence)
-  Powers the integrated AI assistant for offline schema explanations and guidance.
 
 - **[Model Context Protocol (MCP)](https://modelcontextprotocol.io)** (Agentic Interface)
   Exposes AMDF as a standardized server, allowing AI clients to directly interact with, query, and generate infrastructure.
