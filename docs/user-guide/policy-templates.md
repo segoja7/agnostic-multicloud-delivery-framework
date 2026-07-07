@@ -221,15 +221,13 @@ schema PodPolicyMixin:
         }, "Memory limits required in prod"
 ```
 
-### Disabling Policy Templates
+### Opting Out of Validation
 
-Generate without policy templates:
-
-```bash
-amdf generate-k8s Pod --no-policy-template
-```
-
-Or don't use the mixin:
+The policy template is always generated, but validation is opt-in: it applies
+only when you use the `Validated<Kind>` schema (which mixes in the policy) **and**
+uncomment the checks you want to enforce. To skip validation entirely, instance
+the blueprint directly instead of the validated schema — the blueprint has no
+checks of its own:
 
 ```kcl
 # No validation

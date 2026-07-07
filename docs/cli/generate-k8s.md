@@ -16,7 +16,6 @@ amdf generate-k8s KIND [OPTIONS]
 | `--version` | `-v` | TEXT | `1.35.0` | Kubernetes version |
 | `--output` | `-o` | TEXT | `.` | Output directory |
 | `--blueprint/--no-blueprint` | | BOOL | `True` | Generate blueprint |
-| `--policy-template/--no-policy-template` | | BOOL | `True` | Generate policy template |
 
 **Examples:**
 
@@ -29,9 +28,6 @@ amdf generate-k8s Service --version 1.30.0
 
 # Generate without blueprint
 amdf generate-k8s Deployment --no-blueprint
-
-# Generate without policy template
-amdf generate-k8s Pod --no-policy-template
 
 # Custom output directory
 amdf generate-k8s ConfigMap --output ./k8s-schemas

@@ -13,7 +13,6 @@ amdf generate CRD_NAME [OPTIONS]
 | `--output` | `-o` | TEXT | `.` | Output directory |
 | `--context` | `-c` | TEXT | None | Kubernetes context |
 | `--blueprint/--no-blueprint` | | BOOL | `True` | Generate blueprint |
-| `--policy-template/--no-policy-template` | | BOOL | `True` | Generate policy template |
 
 **Examples:**
 
@@ -23,9 +22,6 @@ amdf generate instances.ec2.aws.upbound.io
 
 # Generate without blueprint
 amdf generate instances.ec2.aws.upbound.io --no-blueprint
-
-# Generate without policy template
-amdf generate instances.ec2.aws.upbound.io --no-policy-template
 
 # Custom output directory
 amdf generate instances.ec2.aws.upbound.io --output ./schemas
