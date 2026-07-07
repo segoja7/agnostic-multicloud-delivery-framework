@@ -263,9 +263,10 @@ class K8SNativeGenerator:
             f.write(policy_content)
         
         # Generate main.k with usage examples
+        required_fields = resolved_def.get("properties", {}).get("spec", {}).get("required", [])
         main_k_path = Path(base_dir) / "library" / "main.k"
         if not main_k_path.exists() or main_k_path.read_text().strip() == "The_first_kcl_program = 'Hello World!'":
-            main_k_content = generate_main_k_template(self.kind, has_policies=True)
+            main_k_content = generate_main_k_template(self.kind, has_policies=True, required_fields=required_fields)
             with open(main_k_path, "w", encoding='utf-8') as f:
                 f.write(main_k_content)
         

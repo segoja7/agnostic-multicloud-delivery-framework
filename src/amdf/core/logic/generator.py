@@ -247,25 +247,23 @@ class KCLSchemaGenerator:
         with open(output_path, "w", encoding='utf-8') as f:
             f.write(file_content)
 
-        # Generate policy template
+        # Generate policy template from the same served version used for the schema
         policy_scaffolder = PolicyScaffolder()
-        # Get the OpenAPI schema from the CRD
-        crd_spec = self.crd_json["spec"]
-        openapi_schema = crd_spec["versions"][0]["schema"]["openAPIV3Schema"]
-        policy_content = policy_scaffolder.generate(kind, openapi_schema)
-        
+        policy_content = policy_scaffolder.generate(kind, spec_schema)
+
         # Save policy template
         policy_dir = Path(base_dir) / "library" / "policies"
         policy_dir.mkdir(parents=True, exist_ok=True)
         policy_path = policy_dir / f"{kind}Policy.k"
-        
+
         with open(policy_path, "w", encoding='utf-8') as f:
             f.write(policy_content)
-        
+
         # Generate main.k with usage examples
+        required_fields = spec_schema.get("properties", {}).get("spec", {}).get("required", [])
         main_k_path = Path(base_dir) / "library" / "main.k"
         if not main_k_path.exists() or main_k_path.read_text().strip() == "The_first_kcl_program = 'Hello World!'":
-            main_k_content = generate_main_k_template(kind, has_policies=True)
+            main_k_content = generate_main_k_template(kind, has_policies=True, required_fields=required_fields)
             with open(main_k_path, "w", encoding='utf-8') as f:
                 f.write(main_k_content)
 
