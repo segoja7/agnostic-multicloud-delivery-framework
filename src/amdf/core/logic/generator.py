@@ -40,7 +40,9 @@ def init_kcl_module_if_needed(base_dir: str):
         print("⚠️ 'kcl' command not found. Make sure KCL is installed.")
 
 def to_pascal_case(name):
-    """Convert a string to PascalCase."""
+    """Convert a string to PascalCase. Preserves existing PascalCase."""
+    if "_" not in name:
+        return name
     return name.replace("_", " ").title().replace(" ", "")
 
 class KCLSchemaGenerator:
@@ -230,7 +232,7 @@ class KCLSchemaGenerator:
 
         file_content = f"{file_header}\n\n" + "\n\n".join(all_kcl_code)
 
-        group_path = group.replace(".", "_")
+        group_path = group.replace(".", "_").replace("-", "_")
         filename = f"{group_path}_{version}_{kind}.k"
         
         # Initialize KCL module if needed
