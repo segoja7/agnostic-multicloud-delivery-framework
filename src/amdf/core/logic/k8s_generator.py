@@ -64,25 +64,39 @@ class K8SNativeGenerator:
         
         return definition
     
-    def _resolve_schema(self, schema: Dict[str, Any]) -> Dict[str, Any]:
-        """Recursively resolve all $ref in a schema"""
+    def _resolve_schema(self, schema: Dict[str, Any], _seen: frozenset = frozenset()) -> Dict[str, Any]:
+        """Recursively inline all $ref in a schema.
+
+        `_seen` holds the definition keys along the current resolution path so a
+        recursive definition (e.g. JSONSchemaProps) terminates: a $ref back to a
+        key already on the path collapses to an open object, which downstream
+        types as `any` instead of looping forever.
+        """
         if "$ref" in schema:
-            return self._resolve_ref(schema["$ref"])
-        
+            def_key = schema["$ref"].replace("#/definitions/", "")
+            if def_key in _seen:
+                # Cycle: stop here, keep the use-site description for the docstring.
+                return {"type": "object", "description": schema.get("description", "")}
+            resolved = dict(self._resolve_ref(schema["$ref"]))
+            # The use-site description is more contextual than the type's own.
+            if "description" in schema:
+                resolved["description"] = schema["description"]
+            return self._resolve_schema(resolved, _seen | {def_key})
+
         resolved = schema.copy()
-        
+
         if "properties" in resolved:
             resolved["properties"] = {
-                k: self._resolve_schema(v) 
+                k: self._resolve_schema(v, _seen)
                 for k, v in resolved["properties"].items()
             }
-        
+
         if "items" in resolved:
-            resolved["items"] = self._resolve_schema(resolved["items"])
-        
+            resolved["items"] = self._resolve_schema(resolved["items"], _seen)
+
         if "additionalProperties" in resolved and isinstance(resolved["additionalProperties"], dict):
-            resolved["additionalProperties"] = self._resolve_schema(resolved["additionalProperties"])
-        
+            resolved["additionalProperties"] = self._resolve_schema(resolved["additionalProperties"], _seen)
+
         return resolved
     
     def _find_all_schemas(self, schema_name: str, schema_def: Dict[str, Any]):
@@ -113,7 +127,12 @@ class K8SNativeGenerator:
     def _get_kcl_type(self, prop_name: str, prop_def: Dict[str, Any], parent_schema_name: str) -> str:
         """Convert OpenAPI type to KCL type"""
         prop_type = prop_def.get("type")
-        
+
+        # IntOrString (e.g. Service targetPort) is typed string+format in the spec
+        # but accepts both a port number and a named port.
+        if prop_def.get("format") == "int-or-string":
+            return "int | str"
+
         if prop_type == "string":
             if "enum" in prop_def:
                 return " | ".join([f'"{e}"' for e in prop_def["enum"]])
