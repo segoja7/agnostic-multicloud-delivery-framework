@@ -64,5 +64,5 @@ kubectl auth can-i get customresourcedefinitions
 
 ## See Also
 
-- [MCP Integration](mcp.md) - Using AMDF with MCP
+- [MCP Integration](../user-guide/mcp.md) - Using AMDF with MCP
 - [Examples](../examples/basic.md) - Practical examples

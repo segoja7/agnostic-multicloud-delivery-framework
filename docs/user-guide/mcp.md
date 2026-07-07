@@ -45,5 +45,5 @@ Configure the MCP server in your MCP client configuration:
 
 ## See Also
 
-- [CLI Reference](cli.md) - Command-line interface
+- [CLI Reference](../cli/overview.md) - Command-line interface
 - [Examples](../examples/basic.md) - Practical examples
