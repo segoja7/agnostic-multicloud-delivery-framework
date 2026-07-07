@@ -158,7 +158,7 @@ Policy templates provide compile-time validation in KCL. Generated with common c
 
 ```kcl
 # Replicas validation
-# _replicas >= 2, "Minimum 2 replicas for HA"
+# _replicas == Undefined or _replicas >= 2, "Minimum 2 replicas for HA"
 
 # Security: Disallow privileged containers
 # all container in _template.spec.containers {
@@ -175,11 +175,11 @@ Policy templates provide compile-time validation in KCL. Generated with common c
 
 ```kcl
 # Type validation
-# _type in ["ClusterIP", "NodePort", "LoadBalancer"],
+# _type == Undefined or _type in ["ClusterIP", "NodePort", "LoadBalancer"],
 #     "Invalid service type"
 
 # Port validation
-# len(_ports) > 0, "At least one port required"
+# len(_ports or []) > 0, "At least one port required"
 ```
 
 #### CRDs (Auto-generated from schema)
@@ -193,17 +193,24 @@ Policy templates provide compile-time validation in KCL. Generated with common c
 
 ### Custom Checks
 
-Add your own validation logic:
+Add your own validation logic. Blueprints assign every field unconditionally, so
+an unset optional field is `Undefined`, not absent. Two patterns cover this:
+
+- **Require a field:** `field != Undefined`
+- **Constrain a field only when set:** `field == Undefined or <condition>`
 
 ```kcl
 schema DeploymentPolicyMixin:
     check:
-        # Built-in suggestions
-        _replicas >= 2, "Minimum 2 replicas"
+        # Require a field
+        _namespace != Undefined, "namespace is required"
 
-        # Your custom checks
-        _namespace in ["prod", "staging"], "Invalid namespace"
-        "team" in _labels, "Team label required"
+        # Constrain only when the field is set
+        _replicas == Undefined or _replicas >= 2, "Minimum 2 replicas"
+        _namespace == Undefined or _namespace in ["prod", "staging"], "Invalid namespace"
+
+        # Guard collection access so it never fails on an unset value
+        "team" in (_labels or {}), "Team label required"
 
         all container in _template.spec.containers {
             container.image.startswith("myregistry.io/")

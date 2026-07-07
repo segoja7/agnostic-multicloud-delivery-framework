@@ -131,13 +131,13 @@ While KCL provides powerful validation capabilities, AMDF makes them accessible:
 - **Compile-time feedback**: Fast validation during development
 
 ```kcl
-# AMDF generates this for you
+# AMDF scaffolds these for you — commented out, ready to enable
 schema DeploymentPolicyMixin:
     check:
-        _replicas >= 2, "Minimum 2 replicas for HA"
-        all container in _template.spec.containers {
-            "latest" not in container.image
-        }, "No 'latest' tags allowed"
+        # _replicas == Undefined or _replicas >= 2, "Minimum 2 replicas for HA"
+        # all container in _template.spec.containers {
+        #     not container.image.endswith(":latest")
+        # }, "No ':latest' tags allowed"
 ```
 
 ### 🤖 AI-Native Experience

@@ -33,7 +33,7 @@ AMDF works with any Kubernetes cluster running operators that provide Custom Res
 pip install amdf
 
 # Verify installation
-amdf --version
+amdf version
 ```
 
 ## Verify Installation
