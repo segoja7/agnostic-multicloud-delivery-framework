@@ -2,6 +2,43 @@
 
 <!-- version list -->
 
+## v1.5.0 (2026-07-07)
+
+### Bug Fixes
+
+- Emit Undefined-safe policy checks and always-compiling main.k examples
+  ([`7d4d52d`](https://github.com/segoja7/agnostic-multicloud-delivery-framework/commit/7d4d52d40af01dbb02cae0b40cf4e82a2a649620))
+
+- Preserve PascalCase kinds and sanitize hyphenated CRD groups in generated paths
+  ([`9dd1639`](https://github.com/segoja7/agnostic-multicloud-delivery-framework/commit/9dd1639541dfffe4a53a1bbb5a9e83bcd1c152a7))
+
+### Chores
+
+- Remove dead kyverno translator/manager and unused core modules
+  ([`f3cbc65`](https://github.com/segoja7/agnostic-multicloud-delivery-framework/commit/f3cbc65e87c22c749ebf3e75071b19a1e3cc092c))
+
+### Documentation
+
+- Restructure CLI documentation
+  ([`a581acd`](https://github.com/segoja7/agnostic-multicloud-delivery-framework/commit/a581acd348a38036633d43fb7da1f537b4970906))
+
+### Features
+
+- Add policy template display to MCP server output
+  ([`597f49a`](https://github.com/segoja7/agnostic-multicloud-delivery-framework/commit/597f49ae921314cae6fb6a62529856e4398a3589))
+
+- Generate main.k with usage examples and policy integration
+  ([`81f5b41`](https://github.com/segoja7/agnostic-multicloud-delivery-framework/commit/81f5b415e7f78cf4761e474de14d7912ec7ea4ad))
+
+- Integrate PolicyScaffolder into generate commands
+  ([`61e8f82`](https://github.com/segoja7/agnostic-multicloud-delivery-framework/commit/61e8f82b9ec93a8c0772fb865595c6e9e9b8105e))
+
+### Testing
+
+- Add unit and e2e regression tests for generators and policies
+  ([`9cba799`](https://github.com/segoja7/agnostic-multicloud-delivery-framework/commit/9cba799f2528d2d63b875d026bdf6f33df61f45e))
+
+
 ## v1.4.0 (2026-01-27)
 
 ### Features
