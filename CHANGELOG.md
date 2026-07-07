@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.6.1 (2026-07-07)
+
+### Bug Fixes
+
+- Fully resolve $refs in generate-k8s so nested fields are typed
+  ([`54ac5d6`](https://github.com/segoja7/agnostic-multicloud-delivery-framework/commit/54ac5d683a4f4618cebe5f58dd6d7ba4e026e045))
+
+
 ## v1.6.0 (2026-07-07)
 
 ### Documentation
