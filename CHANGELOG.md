@@ -2,6 +2,25 @@
 
 <!-- version list -->
 
+## v1.7.0 (2026-07-07)
+
+### Documentation
+
+- Align policy examples with generated output and fix amdf version command
+  ([`2b675b4`](https://github.com/segoja7/agnostic-multicloud-delivery-framework/commit/2b675b4cbf8eef59c314f0cc76f89ee2e2dd77d1))
+
+- Fix two broken cross-references in CLI and MCP pages
+  ([`641f6b7`](https://github.com/segoja7/agnostic-multicloud-delivery-framework/commit/641f6b7be72ab1742df8f1750235be813c300f7b))
+
+- Remove nonexistent --no-policy-template flag
+  ([`9e3688e`](https://github.com/segoja7/agnostic-multicloud-delivery-framework/commit/9e3688e60d97e1ae35f9f7360b786f6303dea6ee))
+
+### Features
+
+- Remove Kyverno integration (validate command)
+  ([`68bd9a1`](https://github.com/segoja7/agnostic-multicloud-delivery-framework/commit/68bd9a1fef3ee4f8cc7c8ff10cf6de7a7535def6))
+
+
 ## v1.6.1 (2026-07-07)
 
 ### Bug Fixes
