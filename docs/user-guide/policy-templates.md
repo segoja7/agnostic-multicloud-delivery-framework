@@ -106,17 +106,7 @@ Fix the issue and run again. **No YAML generation needed for policy validation**
 kcl library/main.k -S items > deployment.yaml
 ```
 
-### 6. Validate with Kyverno (Optional)
-
-```bash
-# Against cluster policies (default)
-amdf validate deployment.yaml
-
-# Against local policy file
-amdf validate deployment.yaml --policy policy.yaml
-```
-
-### 7. Apply to Cluster
+### 6. Apply to Cluster
 
 ```bash
 kubectl apply -f deployment.yaml

@@ -71,7 +71,6 @@ nav:
     - List-k8s: cli/list-k8s.md
     - Generate: cli/generate.md
     - Generate-k8s: cli/generate-k8s.md
-    - Validate: cli/validate.md
     - Guided: cli/guided.md
     - Mcp-server: cli/mcp-server.md
   - User Guide:

@@ -2,7 +2,7 @@
 Policy Scaffolder for AMDF
 
 Generates KCL policy templates based on CRD structure analysis.
-Helps users create custom policies when official Kyverno policies are not available.
+Produces compile-time validation checks the user can enable on the blueprint.
 """
 
 from typing import Dict, Any, List
@@ -308,16 +308,13 @@ To use this policy:
 2. Modify values to match your requirements
 3. Add new checks as needed
 4. Use the mixin in your main.k file
-
-For Kyverno policy validation, use: amdf validate manifest.yaml --cluster
 """
 
 schema {kind}PolicyMixin:
     """
     Custom validation checks for {kind} resources.
-    
+
     These checks run at compile-time in KCL.
-    For runtime validation, use Kyverno policies in your cluster.
     """
     
     check:
